@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\16928\\\\Desktop\\\\Claude's project\\\\Albumn\" -Recurse -Force)",
+      "Bash(Select-Object -Property FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npm --version)",
+      "PowerShell(npm *)",
+      "Bash(gh api *)",
+      "Bash(python3 -c \"import sys,base64; print\\(base64.b64decode\\(sys.stdin.read\\(\\)\\).decode\\('utf-8'\\)\\)\")"
+    ]
+  }
+}

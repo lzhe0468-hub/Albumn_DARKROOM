@@ -1,0 +1,761 @@
+﻿<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>摄影记事 · DARKROOM</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root{
+    --ink-0:#0a0805;
+    --ink-1:#120e08;
+    --ink-2:#1a140c;
+    --ink-3:#241c11;
+    --ink-4:#3a2e1c;
+    --kodak:#e6a92b;
+    --kodak-deep:#b87a18;
+    --amber:#d99845;
+    --cream:#ebe1c8;
+    --cream-dim:#a89a78;
+    --cream-fade:#6d6149;
+    --red:#c4523c;
+    --green:#7a8a5c;
+    --note-paper:#e8dcb8;
+    --note-line:#b8a878;
+    --typewriter:'Special Elite','Courier Prime',ui-monospace,monospace;
+    --mono:'Courier Prime',ui-monospace,monospace;
+    --serif:'EB Garamond','Noto Serif SC',serif;
+    --hand:'Caveat',cursive;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100vh;background:var(--ink-0);color:var(--cream);font-family:var(--serif)}
+  body{
+    padding:32px;
+    background:
+      radial-gradient(900px 600px at 20% 0%, #1c1408 0%, transparent 60%),
+      radial-gradient(800px 500px at 110% 100%, #1a0e04 0%, transparent 55%),
+      var(--ink-0);
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:200;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.82  0 0 0 0 0.55  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity:.07;mix-blend-mode:screen;
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:201;
+    background:radial-gradient(120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.6) 100%);
+  }
+
+  .app{
+    max-width:1500px;min-width:1200px;margin:0 auto;
+    border:1px solid #2c2316;
+    background:linear-gradient(180deg,#14110c,#100d09);
+    box-shadow:0 60px 120px -40px rgba(0,0,0,.9), 0 0 0 1px #0a0805, inset 0 1px 0 rgba(235,225,200,.04);
+  }
+
+  /* ============== TOP CHROME ============== */
+  .chrome{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 26px;border-bottom:1px solid #221d14;
+    background:linear-gradient(180deg,#181410,#100d09);
+  }
+  .chrome .lights{display:flex;gap:8px}
+  .chrome .lights i{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.5);display:inline-block}
+  .chrome .lights i.r{background:#7a3a2c} .chrome .lights i.y{background:#a88a4a} .chrome .lights i.g{background:#4a6a48}
+  .brand{display:flex;align-items:center;gap:14px;color:var(--cream-dim)}
+  .brand .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--cream-fade)}
+  .brand .crumb b{color:var(--kodak);font-weight:400}
+  .brand .title{font-family:var(--typewriter);font-size:22px;color:var(--cream);letter-spacing:.12em}
+  .brand .title span.dot{color:var(--kodak)}
+  .meter{display:flex;gap:18px;font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.18em}
+  .meter .dot{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;margin-right:6px;vertical-align:middle;box-shadow:0 0 8px var(--red);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ============== BODY GRID ============== */
+  .body{display:grid;grid-template-columns:320px 1fr 340px;min-height:820px}
+
+  /* ============== LEFT · GOAL LIST ============== */
+  .side{
+    border-right:1px solid #221d14;
+    background:linear-gradient(180deg,#0f0c08,#13100b);
+    padding:24px 22px;display:flex;flex-direction:column;
+  }
+  .side-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:18px;padding-bottom:14px;border-bottom:1px dashed #2a2419;
+  }
+  .side-head h3{
+    font-family:var(--mono);font-size:11px;letter-spacing:.32em;color:var(--cream-fade);
+    text-transform:uppercase;
+  }
+  .side-head .ct{font-family:var(--mono);font-size:10px;color:var(--kodak-deep);letter-spacing:.2em}
+
+  .filters{display:flex;gap:6px;margin-bottom:16px}
+  .filter{
+    flex:1;border:1px solid #2c2316;background:#0e0a06;color:var(--cream-fade);
+    font-family:var(--mono);font-size:10px;letter-spacing:.22em;padding:6px 4px;cursor:pointer;
+    text-align:center;
+  }
+  .filter.on{color:var(--kodak);border-color:var(--kodak)}
+
+  .goals{display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto;padding-right:4px;margin:0 -4px 0 0}
+  .goals::-webkit-scrollbar{width:6px}
+  .goals::-webkit-scrollbar-thumb{background:#2c2316}
+
+  .goal{
+    position:relative;
+    background:linear-gradient(180deg,#1a140c,#150f08);
+    border:1px solid #2c2316;padding:14px 14px 12px;cursor:pointer;
+    transition:.2s;
+  }
+  .goal:hover{border-color:#4a3a22}
+  .goal.active{
+    border-color:var(--kodak);background:linear-gradient(180deg,#1d160d,#161009);
+    box-shadow:0 0 0 1px var(--kodak), 0 0 20px rgba(230,169,43,.1);
+  }
+  /* tape corner */
+  .goal::before{
+    content:"";position:absolute;top:-6px;left:14px;width:38px;height:14px;
+    background:rgba(230,169,43,.18);border:1px solid rgba(230,169,43,.25);
+    transform:rotate(-3deg);
+  }
+  .goal .row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .goal .badge{
+    font-family:var(--mono);font-size:9px;letter-spacing:.22em;padding:2px 6px;
+    border:1px solid currentColor;color:var(--cream-fade);
+  }
+  .goal[data-status="in-progress"] .badge{color:var(--kodak)}
+  .goal[data-status="done"] .badge{color:var(--green)}
+  .goal[data-status="archived"] .badge{color:var(--cream-fade);opacity:.7}
+  .goal .del{
+    background:none;border:1px solid #2c2316;color:var(--cream-fade);
+    width:22px;height:22px;font-family:var(--mono);font-size:11px;cursor:pointer;
+    display:none;align-items:center;justify-content:center;line-height:1;
+  }
+  .goal:hover .del{display:inline-flex}
+  .goal .del:hover{color:var(--red);border-color:var(--red)}
+  .goal h4{
+    font-family:var(--typewriter);font-size:18px;color:var(--cream);letter-spacing:.04em;
+    line-height:1.2;margin:8px 0 4px;
+  }
+  .goal .sub{font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.18em;margin-bottom:10px}
+  .goal .prog{
+    height:5px;background:#0a0805;border:1px solid #2c2316;position:relative;overflow:hidden;
+  }
+  .goal .prog i{
+    position:absolute;left:0;top:0;bottom:0;background:var(--kodak);
+    box-shadow:0 0 8px rgba(230,169,43,.4);
+  }
+  .goal[data-status="done"] .prog i{background:var(--green);box-shadow:0 0 8px rgba(122,138,92,.4)}
+  .goal[data-status="archived"] .prog i{background:#5c5240;box-shadow:none}
+  .goal .pr-row{
+    display:flex;justify-content:space-between;margin-top:6px;
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.14em;
+  }
+  .goal .pr-row b{color:var(--cream);font-weight:400}
+
+  .new-goal{
+    margin-top:14px;border:1px dashed #3a2f1d;background:transparent;color:var(--cream-dim);
+    padding:10px;font-family:var(--mono);font-size:10px;letter-spacing:.22em;cursor:pointer;
+  }
+  .new-goal:hover{color:var(--kodak);border-color:var(--kodak);border-style:solid}
+
+  /* ============== CENTER · DETAIL ============== */
+  .main{padding:32px 36px;display:flex;flex-direction:column;gap:24px;overflow:auto}
+
+  .detail-head{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    padding-bottom:18px;border-bottom:1px dashed #2c2316;
+  }
+  .detail-head .meta{font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.28em;margin-bottom:6px}
+  .detail-head h1{
+    font-family:var(--typewriter);font-size:38px;color:var(--cream);letter-spacing:.08em;line-height:1.1;
+  }
+  .detail-head h1 .en{
+    display:block;font-family:var(--serif);font-style:italic;font-size:18px;color:var(--cream-dim);
+    font-weight:400;margin-top:6px;letter-spacing:.04em;
+  }
+  .detail-head .progress-large{text-align:right}
+  .detail-head .progress-large .big{
+    font-family:var(--typewriter);font-size:42px;color:var(--kodak);line-height:1;letter-spacing:.04em;
+  }
+  .detail-head .progress-large .big em{font-style:normal;color:var(--cream-fade);font-size:24px}
+  .detail-head .progress-large .lbl{font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.28em;margin-top:6px}
+
+  .brief{
+    background:linear-gradient(180deg,#1a140c,#150f08);
+    border:1px solid #2c2316;padding:22px 24px;position:relative;
+  }
+  .brief::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:4px;
+    background:repeating-linear-gradient(90deg, #0a0805 0 6px, var(--kodak) 6px 8px);opacity:.4;
+  }
+  .brief .lbl{font-family:var(--mono);font-size:10px;color:var(--kodak-deep);letter-spacing:.32em;margin-bottom:10px}
+  .brief p{
+    font-family:var(--serif);font-style:italic;font-size:18px;line-height:1.7;color:var(--cream);
+    text-wrap:pretty;
+  }
+  .brief .params{
+    display:flex;gap:24px;margin-top:18px;padding-top:16px;border-top:1px dashed #2c2316;
+    font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.18em;
+  }
+  .brief .params b{color:var(--cream);font-weight:400}
+
+  /* Achievements grid + dropzone */
+  .ach-head{display:flex;align-items:baseline;justify-content:space-between}
+  .ach-head h3{font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.32em}
+  .ach-head .count{font-family:var(--mono);font-size:11px;color:var(--kodak);letter-spacing:.22em}
+
+  .ach-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  }
+  .ach{
+    aspect-ratio:3/2;border:1px solid #2c2316;position:relative;overflow:hidden;
+    background:#1a140c;
+  }
+  .ach .ph{position:absolute;inset:0;background:repeating-linear-gradient(135deg, rgba(230,169,43,.06) 0 8px, transparent 8px 18px), linear-gradient(160deg,#3a2818,#1a0e06)}
+  .ach.b .ph{background:repeating-linear-gradient(135deg, rgba(120,160,200,.06) 0 8px, transparent 8px 18px),linear-gradient(160deg,#1a2230,#0c1018)}
+  .ach.g .ph{background:repeating-linear-gradient(135deg, rgba(140,170,120,.06) 0 8px, transparent 8px 18px),linear-gradient(160deg,#1a2218,#0c100a)}
+  .ach.r .ph{background:repeating-linear-gradient(135deg, rgba(196,82,60,.07) 0 8px, transparent 8px 18px),linear-gradient(160deg,#2a1612,#180a08)}
+  .ach .num{position:absolute;top:6px;left:8px;font-family:var(--mono);font-size:9px;color:rgba(235,225,200,.5);letter-spacing:.18em}
+  .ach .lbl{position:absolute;bottom:6px;left:8px;right:8px;display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:rgba(235,225,200,.55);letter-spacing:.12em}
+  .ach .check{
+    position:absolute;top:6px;right:8px;
+    background:var(--green);color:var(--ink-0);font-family:var(--mono);font-size:9px;font-weight:700;
+    padding:2px 5px;letter-spacing:.15em;
+  }
+  .ach .ach-del{
+    position:absolute;top:6px;left:6px;
+    background:rgba(10,8,5,.75);border:1px solid rgba(196,82,60,.7);color:#e08a72;
+    font-family:var(--mono);font-size:9px;padding:2px 6px;cursor:pointer;
+    display:none;z-index:3;letter-spacing:.1em;
+  }
+  .ach:hover .ach-del{display:block}
+  .ach .ach-del:hover{background:var(--red);color:#1a0a06;border-color:var(--red)}
+
+  .dropzone{
+    aspect-ratio:3/2;border:1.5px dashed #3a2f1d;background:rgba(20,16,10,.4);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;color:var(--cream-fade);cursor:pointer;transition:.2s;
+    font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-align:center;padding:10px;
+  }
+  .dropzone:hover, .dropzone.over{
+    border-color:var(--kodak);color:var(--kodak);background:rgba(230,169,43,.05);
+  }
+  .dropzone .plus{font-size:24px;line-height:1}
+  .dropzone .hint{opacity:.7;letter-spacing:.16em;font-size:9px}
+
+  /* ============== RIGHT · NOTEBOOK ============== */
+  .notebook{
+    border-left:1px solid #221d14;
+    background:
+      linear-gradient(180deg,#100c08,#0c0907);
+    padding:24px 22px;display:flex;flex-direction:column;gap:14px;
+  }
+  .nb-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding-bottom:12px;border-bottom:1px dashed #2a2419;
+  }
+  .nb-head h3{font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.32em;text-transform:uppercase}
+  .nb-head .stamp{
+    font-family:var(--mono);font-size:9px;color:var(--red);border:1px solid var(--red);
+    padding:2px 6px;letter-spacing:.22em;transform:rotate(-2deg);
+  }
+
+  /* the paper card */
+  .paper{
+    position:relative;
+    background:linear-gradient(180deg, var(--note-paper) 0%, #d4c89c 100%);
+    color:#2a2014;
+    padding:30px 22px 22px 46px;
+    flex:1;min-height:520px;
+    box-shadow:
+      0 1px 0 rgba(0,0,0,.2) inset,
+      0 20px 40px -10px rgba(0,0,0,.8),
+      0 0 0 1px #0a0805;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 27px, var(--note-line) 27px 28px),
+      linear-gradient(180deg, var(--note-paper) 0%, #d4c89c 100%);
+  }
+  /* red left margin */
+  .paper::before{
+    content:"";position:absolute;left:32px;top:0;bottom:0;width:1px;background:rgba(196,82,60,.5);
+  }
+  /* holes */
+  .paper::after{
+    content:"";position:absolute;left:10px;top:0;bottom:0;width:14px;
+    background-image:radial-gradient(circle at 7px 36px, #0a0805 4px, transparent 5px),
+                     radial-gradient(circle at 7px 50%, #0a0805 4px, transparent 5px),
+                     radial-gradient(circle at 7px calc(100% - 36px), #0a0805 4px, transparent 5px);
+  }
+  .paper .date{
+    font-family:var(--typewriter);font-size:12px;color:#7a5a30;
+    margin-bottom:14px;letter-spacing:.14em;
+    line-height:28px;
+  }
+  .paper .note-area{
+    width:100%;min-height:380px;background:transparent;border:none;outline:none;resize:none;
+    font-family:var(--hand);font-size:21px;line-height:28px;color:#3a2818;
+    letter-spacing:.01em;
+  }
+  .paper .note-area::placeholder{color:rgba(58,40,24,.4)}
+
+  .nb-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.22em;
+  }
+  .nb-foot .btn{
+    border:1px solid #2c2519;background:#15110b;color:var(--cream-dim);
+    padding:6px 12px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;cursor:pointer
+  }
+  .nb-foot .btn:hover{color:var(--kodak);border-color:var(--kodak)}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+    background:#15110b;border:1px solid var(--kodak);color:var(--cream);
+    font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+    padding:12px 18px;z-index:400;display:flex;align-items:center;gap:10px;
+    box-shadow:0 0 0 1px #0a0805, 0 20px 40px -10px rgba(0,0,0,.8);
+  }
+  .toast[hidden]{display:none}
+  .toast .dot{width:8px;height:8px;background:var(--kodak);border-radius:50%;box-shadow:0 0 10px var(--kodak)}
+  .back-btn{
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.22em;
+    text-decoration:none;padding:5px 10px;border:1px solid rgba(200,169,110,.15);
+    border-radius:3px;transition:color .15s,border-color .15s;white-space:nowrap;
+  }
+  .back-btn:hover{color:var(--kodak);border-color:rgba(230,169,43,.4)}
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <div class="chrome">
+      <div style="display:flex;align-items:center;gap:18px">
+        <div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <a class="back-btn" href="index.html">← 返回</a>
+        <div class="brand">
+          <span class="crumb">DARKROOM / <b>JOURNAL · 摄影记事</b></span>
+          <span class="title">N° 02<span class="dot">.</span></span>
+        </div>
+      </div>
+      <div class="meter">
+        <span><span class="dot"></span>5 ACTIVE</span>
+        <span>本月 23 / 36</span>
+      </div>
+    </div>
+
+    <div class="body">
+
+      <!-- LEFT -->
+      <aside class="side">
+        <div class="side-head">
+          <h3>● 任务胶卷</h3>
+          <span class="ct" id="goal-count">5 卷</span>
+        </div>
+
+        <div class="filters">
+          <button class="filter on" data-f="all">全部</button>
+          <button class="filter" data-f="in-progress">进行中</button>
+          <button class="filter" data-f="done">已完成</button>
+          <button class="filter" data-f="archived">归档</button>
+        </div>
+
+        <div class="goals" id="goals"></div>
+
+        <button class="new-goal" id="new-goal">+ 新建任务胶卷</button>
+      </aside>
+
+      <!-- CENTER -->
+      <main class="main" id="main">
+        <div class="detail-head">
+          <div>
+            <div class="meta" id="d-meta">N° 02 · 进行中 · 始于 2026.04.01</div>
+            <h1 id="d-title">城市边缘的清晨
+              <span class="en" id="d-en">Urban Mornings · 36 Frames Project</span>
+            </h1>
+          </div>
+          <div class="progress-large">
+            <div class="big"><span id="d-cur">14</span><em> / </em><span id="d-tgt">36</span></div>
+            <div class="lbl">FRAMES ACHIEVED</div>
+          </div>
+        </div>
+
+        <section class="brief">
+          <div class="lbl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span>▸ BRIEF · 拍摄构想</span>
+            <button id="btn-edit-desc" style="border:1px solid #e6a92b;background:transparent;color:#e6a92b;padding:5px 14px;font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.18em;cursor:pointer">✎ 编辑构想</button>
+          </div>
+          <p id="d-desc">在城市还没有完全醒来的时刻，捕捉光线擦过墙面、空荡的街道、还没营业的小店、洒水车的雾、晨跑者拉长的影子。一卷三十六张，每一张都来自不同的早晨，希望最后能拼成这座城市的私人晨曲。</p>
+          <textarea id="d-desc-edit" style="display:none;width:100%;background:transparent;border:1px solid var(--kodak);color:var(--cream);font-family:var(--serif);font-style:italic;font-size:18px;line-height:1.7;padding:8px;resize:vertical;min-height:120px;outline:none"></textarea>
+          <div class="params">
+            <span>截止 <b id="d-due">2026.06.30</b></span>
+            <span>状态 <b id="d-stat" style="color:var(--kodak)">IN PROGRESS</b></span>
+            <span>建议时段 <b>05:30 — 07:00</b></span>
+            <span>胶卷绑定 <b>城市夜行</b></span>
+          </div>
+        </section>
+
+        <div>
+          <div class="ach-head" style="margin-bottom:14px">
+            <h3>● 已达成的帧 / ACHIEVED FRAMES</h3>
+            <span class="count"><span id="ach-count">5</span> / <span id="ach-tgt">36</span></span>
+          </div>
+          <div class="ach-grid" id="ach-grid">
+            <div class="ach"><div class="ph"></div><button class="ach-del">✕</button><div class="num">F01 · 04.03</div><span class="check">✓ DONE</span><div class="lbl"><span>建国门桥</span><span>05:42</span></div></div>
+            <div class="ach b"><div class="ph"></div><button class="ach-del">✕</button><div class="num">F02 · 04.07</div><span class="check">✓ DONE</span><div class="lbl"><span>护城河</span><span>06:18</span></div></div>
+            <div class="ach g"><div class="ph"></div><button class="ach-del">✕</button><div class="num">F03 · 04.12</div><span class="check">✓ DONE</span><div class="lbl"><span>胡同口</span><span>06:02</span></div></div>
+            <div class="ach r"><div class="ph"></div><button class="ach-del">✕</button><div class="num">F04 · 04.18</div><span class="check">✓ DONE</span><div class="lbl"><span>豆浆铺</span><span>06:34</span></div></div>
+            <div class="ach"><div class="ph"></div><button class="ach-del">✕</button><div class="num">F05 · 05.02</div><span class="check">✓ DONE</span><div class="lbl"><span>早班地铁</span><span>06:11</span></div></div>
+
+            <div class="dropzone" id="drop" style="position:relative;overflow:hidden">
+              <span class="plus" style="pointer-events:none">＋</span>
+              <span style="pointer-events:none">拖入照片 · 或点击上传</span>
+              <span class="hint" style="pointer-events:none">图片将显示在达成帧中</span>
+              <input type="file" id="drop-file" accept="image/*" multiple
+                style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2">
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT NOTEBOOK -->
+      <aside class="notebook">
+        <div class="nb-head">
+          <h3>● 灵感本</h3>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="stamp">FIELD NOTES</span>
+            <button id="btn-edit-notes" style="border:1px solid #e6a92b;background:transparent;color:#e6a92b;padding:5px 14px;font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.18em;cursor:pointer">✎ 编辑</button>
+          </div>
+        </div>
+
+        <div class="paper">
+          <div class="date">— 周日，5月24日，雨后 —</div>
+          <textarea class="note-area" id="notes" placeholder="今天想到的、看到的、下次想拍的……" readonly>下次去一趟首钢园，老旧的工业管道，配清晨的薄雾应该很有味道。
+
+构图试试三分法的反面 —— 把人物压到画面最底端，把整面墙给天空。
+
+f/8 是稳的，但 f/2 在晨雾里更像梦。
+
+记得带 35mm，长焦带去也用不上。
+还差一卷胶卷买不到了，下周淘宝再补。</textarea>
+        </div>
+
+        <div class="nb-foot">
+          <span><span id="word-count">0</span> 字 · 自动保存</span>
+          <div style="display:flex;gap:8px">
+            <button id="btn-done-notes" style="display:none;border:1px solid #e6a92b;background:#e6a92b;color:#0a0805;padding:5px 14px;font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.18em;cursor:pointer">✓ 完成</button>
+            <button class="btn" id="clear-notes">＋ 新一页</button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden><span class="dot"></span><span id="toast-msg">已保存</span></div>
+
+<script>
+  // ====== DATA ======
+  const goals = [
+    { id:1, name:'城市边缘的清晨', en:'Urban Mornings · 36 Frames Project',
+      meta:'始于 2026.04.01', due:'2026.06.30', cur:14, tgt:36, status:'in-progress',
+      desc:'在城市还没有完全醒来的时刻，捕捉光线擦过墙面、空荡的街道、还没营业的小店、洒水车的雾、晨跑者拉长的影子。一卷三十六张，每一张都来自不同的早晨，希望最后能拼成这座城市的私人晨曲。',
+      window:'05:30 — 07:00', roll:'城市夜行', active:true },
+    { id:2, name:'陌生人的脸', en:'Strangers · 24 Portraits',
+      meta:'始于 2026.03.10', due:'2026.07.10', cur:9, tgt:24, status:'in-progress',
+      desc:'用 35mm 走近一些。每一张前都要先和对方说一句话——一张照片之前一定要有一次相遇。',
+      window:'下午斜光', roll:'人像 · 春' },
+    { id:3, name:'同一棵树 · 四季',
+      en:'One Tree · Four Seasons',
+      meta:'始于 2025.12.21', due:'2026.12.21', cur:2, tgt:4, status:'in-progress',
+      desc:'家附近那棵老国槐，每一个节气拍一次同机位。终点是它的下一个冬天。',
+      window:'清晨或黄昏', roll:'本地散步' },
+    { id:4, name:'胶片显微 · 微距练习',
+      en:'Micro · Macro Studies',
+      meta:'完成于 2026.03.30', due:'已完成', cur:20, tgt:20, status:'done',
+      desc:'两个月，每天拍一张 5cm 以内的小东西。完成。',
+      window:'随机', roll:'暗房习作' },
+    { id:5, name:'雨夜霓虹',
+      en:'Neon Rain · Archived',
+      meta:'2025 冬归档', due:'已归档', cur:12, tgt:30, status:'archived',
+      desc:'本来想拍一卷雨夜里的招牌灯光，后来天没怎么下雨，没做完。留着想起的时候继续。',
+      window:'雨天 21:00 后', roll:'城市夜行' },
+  ];
+  let nextGoalId = 6;
+  let activeGoal = goals[0];
+  let activeFilter = 'all';
+
+  // ====== RENDER GOALS ======
+  const goalsEl = document.getElementById('goals');
+  const goalCountEl = document.getElementById('goal-count');
+
+  const STATUS_LABEL = { 'in-progress':'IN PROGRESS', 'done':'DONE', 'archived':'ARCHIVED' };
+  const STATUS_ZH    = { 'in-progress':'进行中',     'done':'已完成', 'archived':'已归档' };
+
+  function renderGoals(){
+    goalsEl.innerHTML = '';
+    const visible = goals.filter(g => activeFilter === 'all' || g.status === activeFilter);
+    goalCountEl.textContent = `${visible.length} 卷`;
+    visible.forEach(g => {
+      const pct = Math.min(100, Math.round(g.cur / g.tgt * 100));
+      const el = document.createElement('div');
+      el.className = 'goal' + (g.id === activeGoal?.id ? ' active' : '');
+      el.dataset.status = g.status;
+      el.innerHTML = `
+        <div class="row1">
+          <span class="badge">${STATUS_LABEL[g.status]}</span>
+          <button class="del" title="删除">×</button>
+        </div>
+        <h4>${escapeHtml(g.name)}</h4>
+        <div class="sub">${escapeHtml(g.en || '')}</div>
+        <div class="prog"><i style="width:${pct}%"></i></div>
+        <div class="pr-row">
+          <span><b>${g.cur}</b> / ${g.tgt} 帧</span>
+          <span>${pct}%</span>
+        </div>
+      `;
+      el.addEventListener('click', e => {
+        if (e.target.classList.contains('del')) return;
+        activeGoal = g;
+        renderGoals();
+        renderDetail();
+      });
+      el.querySelector('.del').addEventListener('click', e => {
+        e.stopPropagation();
+        if (!confirm(`删除任务「${g.name}」？`)) return;
+        const i = goals.findIndex(x => x.id === g.id);
+        goals.splice(i, 1);
+        if (activeGoal?.id === g.id) activeGoal = goals[0] || null;
+        renderGoals();
+        renderDetail();
+        showToast('✓ 已删除任务');
+      });
+      goalsEl.appendChild(el);
+    });
+  }
+
+  // ====== RENDER DETAIL ======
+  function renderDetail(){
+    const main = document.getElementById('main');
+    if (!activeGoal) { main.style.opacity = .35; return; }
+    main.style.opacity = 1;
+    document.getElementById('d-title').firstChild.nodeValue = activeGoal.name + ' ';
+    document.getElementById('d-en').textContent = activeGoal.en || '';
+    document.getElementById('d-meta').textContent =
+      `N° ${String(activeGoal.id).padStart(2,'0')} · ${STATUS_ZH[activeGoal.status]} · ${activeGoal.meta}`;
+    document.getElementById('d-cur').textContent = activeGoal.cur;
+    document.getElementById('d-tgt').textContent = activeGoal.tgt;
+    document.getElementById('d-desc').textContent = activeGoal.desc;
+    document.getElementById('d-due').textContent = activeGoal.due;
+    const stat = document.getElementById('d-stat');
+    stat.textContent = STATUS_LABEL[activeGoal.status];
+    stat.style.color = activeGoal.status === 'done' ? 'var(--green)' :
+                       activeGoal.status === 'archived' ? 'var(--cream-fade)' : 'var(--kodak)';
+    document.getElementById('ach-count').textContent = activeGoal.cur;
+    document.getElementById('ach-tgt').textContent = activeGoal.tgt;
+  }
+
+  // ====== FILTERS ======
+  document.querySelectorAll('.filter').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.filter').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      activeFilter = b.dataset.f;
+      renderGoals();
+    });
+  });
+
+  // ====== NEW GOAL ======
+  document.getElementById('new-goal').addEventListener('click', () => {
+    const name = prompt('新任务的名字：', '新拍摄计划');
+    if (!name) return;
+    const tgtStr = prompt('目标张数（默认 36）：', '36');
+    const tgt = parseInt(tgtStr) || 36;
+    const g = {
+      id: nextGoalId++, name: name.trim(), en: '',
+      meta: '始于 ' + new Date().toISOString().slice(0,10).replace(/-/g,'.'),
+      due: '未定', cur: 0, tgt, status: 'in-progress',
+      desc: '点击此处补充拍摄构想……',
+      window: '—', roll: '—',
+    };
+    goals.unshift(g);
+    activeGoal = g;
+    renderGoals();
+    renderDetail();
+    showToast('✓ 已建立新任务');
+  });
+
+  // ====== DROPZONE — real file upload ======
+  const drop = document.getElementById('drop');
+  const dropFile = document.getElementById('drop-file');
+  const achGrid = document.getElementById('ach-grid');
+
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('over');
+    handleDropFiles(e.dataTransfer.files);
+  });
+  dropFile.addEventListener('change', e => {
+    handleDropFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  function handleDropFiles(files) {
+    if (!activeGoal) return;
+    const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (!arr.length) { showToast('请上传图片文件'); return; }
+    let loaded = 0;
+    arr.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        addAchFrame(ev.target.result, file.name.replace(/\.[^.]+$/, ''));
+        loaded++;
+        if (loaded === arr.length) {
+          activeGoal.cur = Math.min(activeGoal.tgt, activeGoal.cur + arr.length);
+          if (activeGoal.cur >= activeGoal.tgt) activeGoal.status = 'done';
+          renderGoals(); renderDetail();
+          showToast(`✓ 已上传 ${arr.length} 张照片`);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function addAchFrame(src, label) {
+    const div = document.createElement('div');
+    div.className = 'ach';
+    div.style.cssText = 'position:relative;aspect-ratio:3/2;border:1px solid #2c2316;overflow:hidden;background:#1a140c;';
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+    img.alt = '';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'ach-del';
+    delBtn.textContent = '✕';
+    const check = document.createElement('span');
+    check.className = 'check';
+    check.textContent = '✓ DONE';
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.innerHTML = `<span>${escapeHtml(label)}</span>`;
+    div.appendChild(img);
+    div.appendChild(delBtn);
+    div.appendChild(check);
+    div.appendChild(lbl);
+    achGrid.insertBefore(div, drop);
+  }
+
+  // Delete handler — event delegation on the whole grid
+  achGrid.addEventListener('click', e => {
+    const btn = e.target.closest('.ach-del');
+    if (!btn) return;
+    const frame = btn.closest('.ach');
+    if (!frame) return;
+    if (!confirm('删除这张照片？')) return;
+    frame.remove();
+    if (activeGoal) {
+      activeGoal.cur = Math.max(0, activeGoal.cur - 1);
+      if (activeGoal.status === 'done' && activeGoal.cur < activeGoal.tgt) {
+        activeGoal.status = 'in-progress';
+      }
+      renderGoals();
+      renderDetail();
+    }
+    showToast('✓ 已删除');
+  });
+
+  // ====== EDIT BRIEF (拍摄构想) ======
+  const descP = document.getElementById('d-desc');
+  const descEdit = document.getElementById('d-desc-edit');
+  const btnEditDesc = document.getElementById('btn-edit-desc');
+
+  btnEditDesc.addEventListener('click', () => {
+    if (descEdit.style.display === 'none') {
+      descEdit.value = descP.textContent;
+      descEdit.style.display = 'block';
+      descP.style.display = 'none';
+      btnEditDesc.textContent = '✓ 保存构想';
+      descEdit.focus();
+    } else {
+      const val = descEdit.value.trim();
+      if (val && activeGoal) activeGoal.desc = val;
+      descP.textContent = val || descP.textContent;
+      descEdit.style.display = 'none';
+      descP.style.display = '';
+      btnEditDesc.textContent = '✎ 编辑构想';
+      showToast('✓ 构想已保存');
+    }
+  });
+
+  // ====== NOTES — edit mode toggle ======
+  const notes = document.getElementById('notes');
+  const wc = document.getElementById('word-count');
+  const btnEditNotes = document.getElementById('btn-edit-notes');
+  const btnDoneNotes = document.getElementById('btn-done-notes');
+
+  const updateWc = () => wc.textContent = notes.value.replace(/\s/g,'').length;
+
+  btnEditNotes.addEventListener('click', () => {
+    notes.removeAttribute('readonly');
+    notes.focus();
+    notes.setSelectionRange(notes.value.length, notes.value.length);
+    btnEditNotes.style.display = 'none';
+    btnDoneNotes.style.display = '';
+  });
+
+  btnDoneNotes.addEventListener('click', () => {
+    notes.setAttribute('readonly', '');
+    try { localStorage.setItem('darkroom_notes', notes.value); } catch(e) {}
+    btnDoneNotes.style.display = 'none';
+    btnEditNotes.style.display = '';
+    showToast('✓ 灵感本已保存');
+  });
+
+  notes.addEventListener('input', () => {
+    updateWc();
+    try { localStorage.setItem('darkroom_notes', notes.value); } catch(e) {}
+  });
+
+  try {
+    const saved = localStorage.getItem('darkroom_notes');
+    if (saved !== null) notes.value = saved;
+  } catch(e) {}
+  updateWc();
+
+  document.getElementById('clear-notes').addEventListener('click', () => {
+    if (!notes.value || confirm('开始新的一页？当前内容会清空。')) {
+      notes.removeAttribute('readonly');
+      notes.value = '';
+      updateWc();
+      try { localStorage.setItem('darkroom_notes', ''); } catch(e) {}
+      btnEditNotes.style.display = 'none';
+      btnDoneNotes.style.display = '';
+      notes.focus();
+    }
+  });
+
+  // ====== TOAST ======
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toast-msg');
+  let toastTimer;
+  function showToast(msg){
+    toastMsg.textContent = msg;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.hidden = true, 2000);
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ====== INIT ======
+  renderGoals();
+  renderDetail();
+</script>
+</body>
+</html>

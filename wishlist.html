@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>心愿胶卷 · DARKROOM</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root{
+    --ink-0:#0a0805;--ink-1:#120e08;--ink-2:#1a140c;--ink-3:#241c11;--ink-4:#3a2e1c;
+    --kodak:#e6a92b;--kodak-deep:#b87a18;--amber:#d99845;
+    --cream:#ebe1c8;--cream-dim:#a89a78;--cream-fade:#6d6149;
+    --red:#c4523c;--wax:#9a3326;
+    --typewriter:'Special Elite','Courier Prime',ui-monospace,monospace;
+    --mono:'Courier Prime',ui-monospace,monospace;
+    --serif:'EB Garamond','Noto Serif SC',serif;
+    --hand:'Caveat',cursive;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100vh;background:var(--ink-0);color:var(--cream);font-family:var(--serif)}
+  body{padding:32px;background:radial-gradient(900px 600px at 20% 0%,#1c1408 0%,transparent 60%),radial-gradient(800px 500px at 110% 100%,#1a0e04 0%,transparent 55%),var(--ink-0)}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:200;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.82  0 0 0 0 0.55  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");opacity:.07;mix-blend-mode:screen}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:201;background:radial-gradient(120% 90% at 50% 50%,transparent 50%,rgba(0,0,0,.7) 100%)}
+
+  .app{max-width:1320px;min-width:1080px;margin:0 auto;border:1px solid #2c2316;background:linear-gradient(180deg,#14110c,#100d09);box-shadow:0 60px 120px -40px rgba(0,0,0,.9),0 0 0 1px #0a0805,inset 0 1px 0 rgba(235,225,200,.04)}
+
+  .chrome{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid #221d14;background:linear-gradient(180deg,#181410,#100d09)}
+  .chrome .lights{display:flex;gap:8px}
+  .chrome .lights i{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.5);display:inline-block}
+  .chrome .lights i.r{background:#7a3a2c}.chrome .lights i.y{background:#a88a4a}.chrome .lights i.g{background:#4a6a48}
+  .brand{display:flex;align-items:center;gap:14px;color:var(--cream-dim)}
+  .brand .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--cream-fade)}
+  .brand .crumb b{color:var(--kodak);font-weight:400}
+  .brand .title{font-family:var(--typewriter);font-size:22px;color:var(--cream);letter-spacing:.12em}
+  .brand .title span.dot{color:var(--kodak)}
+  .meter{display:flex;gap:18px;font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.2em;align-items:center}
+  .meter .live{display:inline-flex;align-items:center;gap:6px;color:var(--red)}
+  .meter .live i{width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .view{display:none;padding:30px 36px 40px}
+  .view.on{display:block}
+
+  /* ===== LIST VIEW ===== */
+  .list-head{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:20px;border-bottom:1px dashed #2c2316;margin-bottom:24px}
+  .list-head h1{font-family:var(--typewriter);font-size:34px;color:var(--cream);letter-spacing:.08em}
+  .list-head h1 .en{display:block;font-family:var(--serif);font-style:italic;font-size:16px;color:var(--kodak);margin-top:6px;font-weight:400}
+  .btn-new{display:inline-flex;align-items:center;gap:8px;background:var(--kodak);color:var(--ink-0);border:1px solid var(--kodak);font-family:var(--mono);font-size:12px;letter-spacing:.18em;padding:12px 20px;cursor:pointer;font-weight:700}
+  .btn-new:hover{background:var(--amber);border-color:var(--amber)}
+
+  .roll-list{display:flex;flex-direction:column;gap:14px}
+  .roll-card{display:grid;grid-template-columns:64px 1fr 240px 40px;gap:24px;align-items:center;background:linear-gradient(180deg,#1a140c,#150f08);border:1px solid #2c2316;padding:20px 24px;cursor:pointer;transition:.2s;position:relative}
+  .roll-card:hover{border-color:var(--kodak);transform:translateX(3px)}
+  .rc-ic{width:64px;height:64px;position:relative}
+  .rc-ic svg{width:100%;height:100%}
+  .rc-info h3{font-family:var(--typewriter);font-size:24px;color:var(--cream);letter-spacing:.04em}
+  .rc-info .rc-name-input{background:#0a0805;border:1px solid var(--kodak);color:var(--cream);font-family:var(--typewriter);font-size:22px;letter-spacing:.04em;width:100%;outline:none;padding:2px 6px}
+  .rc-info .meta{font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.18em;margin-top:6px}
+  .rc-info .meta b{color:var(--cream-dim);font-weight:400}
+  .rc-prog{display:flex;align-items:center;gap:14px}
+  .prog-track{flex:1;height:10px;background:#0a0805;border:1px solid #2c2316;position:relative;overflow:hidden}
+  .prog-track::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,transparent 0 8px,rgba(0,0,0,.25) 8px 9px)}
+  .prog-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(180deg,var(--kodak),var(--kodak-deep));box-shadow:0 0 10px rgba(230,169,43,.5)}
+  .rc-prog .pct{font-family:var(--typewriter);font-size:20px;color:var(--kodak);letter-spacing:.04em;min-width:48px;text-align:right}
+  .rc-arrow{font-family:var(--mono);font-size:22px;color:var(--cream-fade);text-align:center;transition:.2s}
+  .roll-card:hover .rc-arrow{color:var(--kodak);transform:translateX(3px)}
+
+  /* ===== DETAIL VIEW ===== */
+  .detail-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px dashed #2c2316;margin-bottom:0;gap:18px}
+  .back{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid #2c2316;color:var(--cream-dim);font-family:var(--mono);font-size:11px;letter-spacing:.2em;padding:8px 14px;cursor:pointer;white-space:nowrap}
+  .back:hover{color:var(--kodak);border-color:var(--kodak)}
+  .detail-title{display:flex;flex-direction:column;gap:4px;flex:1}
+  .detail-title h1{font-family:var(--typewriter);font-size:28px;color:var(--cream);letter-spacing:.06em}
+  .detail-title .meta{font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.18em}
+  .detail-prog{display:flex;align-items:center;gap:14px;min-width:240px}
+  .detail-prog .big{font-family:var(--typewriter);font-size:34px;color:var(--kodak);line-height:1}
+  .detail-prog .track{flex:1;height:8px;background:#0a0805;border:1px solid #2c2316;position:relative;overflow:hidden}
+  .detail-prog .track i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(180deg,var(--kodak),var(--kodak-deep));box-shadow:0 0 8px rgba(230,169,43,.5)}
+  .btn-upload-wrap{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:6px;background:#15110b;border:1px solid #2c2519;color:var(--cream-dim);font-family:var(--mono);font-size:10px;letter-spacing:.2em;padding:8px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+  .btn-upload-wrap:hover{color:var(--kodak);border-color:var(--kodak)}
+
+  /* detail body: filmstrip left + right panel */
+  /* detail body — stretch so left column fills same height as right */
+  .detail-body{display:grid;grid-template-columns:220px 1fr;border-top:1px solid #1d1812;margin-top:18px;align-items:stretch}
+
+  /* filmstrip outer: fills full left column height, pushes window to bottom */
+  .film-strip-outer{padding:10px 0 10px 12px;background:linear-gradient(180deg,#0f0c08,#0c0907);border-right:1px solid #1d1812;display:flex;flex-direction:column;justify-content:flex-end}
+  .film-strip{
+    height:400px;overflow-y:scroll;overflow-x:hidden;
+    background:#060503;
+    border:1px solid #1d1812;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.6),0 0 0 1px #0a0805;
+    position:relative;padding:10px 0;
+    scrollbar-width:thin;scrollbar-color:#2c2316 #060503;
+  }
+  .film-strip::-webkit-scrollbar{width:4px}
+  .film-strip::-webkit-scrollbar-track{background:#060503}
+  .film-strip::-webkit-scrollbar-thumb{background:#2c2316;border-radius:2px}
+  .film-strip::-webkit-scrollbar-thumb:hover{background:#3a2f1d}
+  .film-strip::before,.film-strip::after{content:"";position:absolute;left:0;right:4px;height:8px;background-image:repeating-linear-gradient(90deg,transparent 0 10px,rgba(0,0,0,.85) 10px 14px,transparent 14px 24px);z-index:1;pointer-events:none}
+  .film-strip::before{top:0}.film-strip::after{bottom:0}
+
+  .strip-cell{width:calc(100% - 20px);margin:5px 10px;aspect-ratio:3/2;position:relative;border:1px solid #2c2316;background:#120d08;cursor:pointer;overflow:hidden;transition:.18s}
+  .strip-cell:hover{border-color:var(--kodak)}
+  .strip-cell.sel{border-color:var(--kodak);box-shadow:0 0 0 1px var(--kodak),0 0 12px rgba(230,169,43,.2)}
+  .strip-cell .sidx{position:absolute;top:3px;left:5px;font-family:var(--mono);font-size:8px;color:rgba(235,225,200,.4);letter-spacing:.14em;z-index:2}
+  .strip-cell .splus{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;color:#3a2e1c;transition:.18s;pointer-events:none}
+  .strip-cell:hover .splus{color:var(--kodak)}
+  .strip-cell .sseal{position:absolute;bottom:3px;right:4px;font-size:9px;color:rgba(230,169,43,.7);z-index:2}
+  .strip-cell.filled.t1{background:repeating-linear-gradient(135deg,rgba(230,169,43,.08) 0 6px,transparent 6px 14px),linear-gradient(160deg,#5a3a18,#1c1006)}
+  .strip-cell.filled.t2{background:repeating-linear-gradient(135deg,rgba(120,160,200,.06) 0 6px,transparent 6px 14px),linear-gradient(160deg,#1a2230,#0c1018)}
+  .strip-cell.filled.t3{background:repeating-linear-gradient(135deg,rgba(140,170,120,.06) 0 6px,transparent 6px 14px),linear-gradient(160deg,#1a2218,#0c100a)}
+  .strip-cell.filled.t4{background:repeating-linear-gradient(135deg,rgba(196,82,60,.07) 0 6px,transparent 6px 14px),linear-gradient(160deg,#2a1612,#180a08)}
+  .strip-cell.empty{background:repeating-linear-gradient(135deg,rgba(235,225,200,.025) 0 6px,transparent 6px 14px),#100c08}
+
+  /* projector icon area */
+  .projector-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:.55;padding-bottom:8px}
+  .projector-area svg{width:72px;height:72px}
+  .projector-area span{font-family:var(--mono);font-size:9px;color:var(--cream-fade);letter-spacing:.28em;text-align:center}
+
+  /* cell delete button */
+  .cell-del{position:absolute;top:4px;right:4px;background:rgba(10,8,5,.8);border:1px solid rgba(196,82,60,.7);color:#e08a72;font-family:var(--mono);font-size:9px;padding:2px 5px;cursor:pointer;z-index:3;display:none;letter-spacing:.1em}
+  .strip-cell:hover .cell-del{display:block}
+  .cell-del:hover{background:var(--red);color:#1a0a06;border-color:var(--red)}
+
+  /* right panel */
+  .right-panel{display:flex;flex-direction:column}
+  .large-view{flex:0 0 240px;background:#060503;border-bottom:1px solid #1d1812;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .letters{flex:1;min-height:160px;overflow-y:auto;background:linear-gradient(180deg,#15110b,#100c07);padding:16px 20px}
+  .large-view img{width:100%;height:100%;object-fit:cover}
+  .lv-empty{text-align:center;color:var(--cream-fade)}
+  .lv-empty .t{font-family:var(--typewriter);font-size:18px;color:var(--cream-dim);letter-spacing:.06em;margin-bottom:8px}
+  .lv-empty .s{font-family:var(--mono);font-size:10px;letter-spacing:.22em}
+  .lv-title{position:absolute;bottom:0;left:0;right:0;padding:14px 18px;background:linear-gradient(transparent,rgba(0,0,0,.75));font-family:var(--serif);font-style:italic;font-size:18px;color:var(--cream)}
+
+  /* 互心信笺 */
+  .letters-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed #2c2316}
+  .letters-head h3{font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.3em}
+  .letters-head h3 b{color:var(--kodak);font-weight:400}
+  .letters-head .for{font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.2em}
+  .ltabs{display:flex;gap:0;margin-bottom:16px}
+  .ltab{flex:1;padding:10px 14px;background:#100c08;border:1px solid #2c2316;cursor:pointer;font-family:var(--typewriter);font-size:15px;color:var(--cream-fade);letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:8px;transition:.18s;border-bottom:2px solid transparent}
+  .ltab+.ltab{border-left:none}
+  .ltab:hover{color:var(--cream-dim)}
+  .ltab .em{font-size:11px;font-family:var(--mono);letter-spacing:.16em}
+  .ltab.on{color:var(--cream);background:linear-gradient(180deg,#1d160d,#15100a)}
+  .ltab.a.on{border-bottom-color:var(--kodak)}
+  .ltab.b.on{border-bottom-color:var(--red)}
+
+  .letter-stage{position:relative}
+  .sealed{position:relative;border:1px solid #2c2316;overflow:hidden;background:repeating-linear-gradient(135deg,rgba(230,169,43,.05) 0 10px,transparent 10px 22px),linear-gradient(160deg,#241a0e,#15100a);min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:.2s}
+  .sealed:hover{border-color:var(--kodak)}
+  .sealed .perf{position:absolute;left:0;right:0;height:12px;background-image:repeating-linear-gradient(90deg,transparent 0 14px,rgba(8,6,4,.9) 14px 22px,transparent 22px 36px)}
+  .sealed .perf.t{top:0;border-bottom:1px solid rgba(0,0,0,.5)}
+  .sealed .perf.b{bottom:0;border-top:1px solid rgba(0,0,0,.5)}
+  .sealed .wax{width:60px;height:60px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#c4523c,var(--wax) 55%,#5a1d14 100%);box-shadow:inset 0 2px 4px rgba(255,150,120,.4),inset 0 -3px 6px rgba(0,0,0,.5),0 4px 10px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center}
+  .sealed .wax span{font-family:var(--typewriter);font-size:22px;color:#3a0f0a;text-shadow:0 1px 0 rgba(255,160,130,.4)}
+  .sealed .seal-text{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--cream-dim);text-align:center}
+  .sealed .seal-text b{color:var(--cream);font-style:normal;font-weight:400}
+  .sealed .hint{font-family:var(--mono);font-size:9px;color:var(--cream-fade);letter-spacing:.28em}
+  .sealed.tearing{pointer-events:none}
+  .sealed .tear-top,.sealed .tear-bot{position:absolute;left:0;right:0;height:50%;overflow:hidden;z-index:5;background:repeating-linear-gradient(135deg,rgba(230,169,43,.05) 0 10px,transparent 10px 22px),linear-gradient(160deg,#241a0e,#15100a);display:none}
+  .sealed .tear-top{top:0;border-bottom:2px dashed rgba(230,169,43,.4);transition:transform .5s cubic-bezier(.5,0,.6,1),opacity .5s}
+  .sealed .tear-bot{bottom:0;border-top:2px dashed rgba(230,169,43,.4);transition:transform .5s cubic-bezier(.5,0,.6,1),opacity .5s}
+  .sealed.tearing .tear-top,.sealed.tearing .tear-bot{display:block}
+  .sealed.tearing .wax,.sealed.tearing .seal-text,.sealed.tearing .hint{opacity:0;transition:opacity .2s}
+  .sealed.torn .tear-top{transform:translateY(-105%) rotate(-3deg);opacity:0}
+  .sealed.torn .tear-bot{transform:translateY(105%) rotate(3deg);opacity:0}
+  .opened{display:none;border:1px solid #2c2316;background:linear-gradient(180deg,#0e0b07,#0a0805);padding:18px 20px;position:relative}
+  .opened.show{display:block;animation:fadein .4s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .opened .from{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.24em}
+  .opened .from b{color:var(--kodak);font-weight:400}
+  .letter-text{width:100%;min-height:100px;background:transparent;border:none;outline:none;resize:vertical;font-family:var(--hand);font-size:20px;line-height:1.5;color:var(--cream);letter-spacing:.01em}
+  .letter-text::placeholder{color:var(--cream-fade);font-style:italic}
+  .opened .ops{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed #2c2316}
+  .opened .ops .tip{font-family:var(--mono);font-size:9px;color:var(--cream-fade);letter-spacing:.2em}
+  .btn-close{background:#15110b;border:1px solid #2c2519;color:var(--cream-dim);padding:6px 14px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;cursor:pointer}
+  .btn-close:hover{color:var(--kodak);border-color:var(--kodak)}
+
+  .no-sel{padding:30px 20px;text-align:center;color:var(--cream-fade)}
+  .no-sel .t{font-family:var(--typewriter);font-size:18px;color:var(--cream-dim);letter-spacing:.06em;margin-bottom:6px}
+  .no-sel .s{font-family:var(--mono);font-size:10px;letter-spacing:.22em}
+
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#15110b;border:1px solid var(--kodak);color:var(--cream);font-family:var(--mono);font-size:11px;letter-spacing:.22em;padding:12px 18px;z-index:400;display:flex;align-items:center;gap:10px;box-shadow:0 0 0 1px #0a0805,0 20px 40px -10px rgba(0,0,0,.8)}
+  .toast[hidden]{display:none}
+  .toast .dot{width:8px;height:8px;background:var(--kodak);border-radius:50%;box-shadow:0 0 10px var(--kodak)}
+  .back-btn{font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.22em;text-decoration:none;padding:5px 10px;border:1px solid rgba(200,169,110,.15);border-radius:3px;transition:color .15s,border-color .15s;white-space:nowrap}
+  .back-btn:hover{color:var(--kodak);border-color:rgba(230,169,43,.4)}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="chrome">
+    <div style="display:flex;align-items:center;gap:18px">
+      <div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+      <a class="back-btn" href="couple.html">← 返回</a>
+      <div class="brand">
+        <span class="crumb">DARKROOM / COUPLE / <b>心愿胶卷</b></span>
+        <span class="title">Wish List<span class="dot">.</span></span>
+      </div>
+    </div>
+    <div class="meter">
+      <span class="live"><i></i>TOGETHER</span>
+      <span id="meter-names">阿野 ✕ 林</span>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <section class="view on" id="view-list">
+    <div class="list-head">
+      <h1>心愿胶卷
+        <span class="en">Wish List · Together — 还没拍完的那些约定</span>
+      </h1>
+      <button class="btn-new" id="btn-new">＋ 新建胶卷</button>
+    </div>
+    <div class="roll-list" id="roll-list"></div>
+  </section>
+
+  <!-- DETAIL VIEW -->
+  <section class="view" id="view-detail">
+    <div class="detail-head" style="padding:20px 0 18px">
+      <button class="back" id="back">‹ 返回</button>
+      <div class="detail-title">
+        <h1 id="d-name"></h1>
+        <div class="meta" id="d-meta"></div>
+      </div>
+      <div class="detail-prog">
+        <div class="track"><i id="d-fill"></i></div>
+        <div class="big" id="d-pct">0%</div>
+      </div>
+      <div class="btn-upload-wrap" id="btn-upload-wrap">
+        ↑ 上传心愿照
+        <input type="file" id="upload-photo" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2">
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <!-- LEFT: vertical filmstrip mini window -->
+      <div class="film-strip-outer">
+        <div class="projector-area">
+          <svg viewBox="0 0 72 72" fill="none" stroke="#d99845" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <!-- body -->
+            <rect x="10" y="26" width="52" height="26" rx="4"/>
+            <!-- lens barrel -->
+            <circle cx="36" cy="39" r="10"/>
+            <circle cx="36" cy="39" r="6"/>
+            <circle cx="36" cy="39" r="2.5" fill="#d99845" opacity=".5"/>
+            <!-- film reels top -->
+            <circle cx="20" cy="20" r="7"/>
+            <circle cx="20" cy="20" r="3"/>
+            <circle cx="52" cy="20" r="7"/>
+            <circle cx="52" cy="20" r="3"/>
+            <!-- reel arms -->
+            <line x1="20" y1="26" x2="20" y2="27"/>
+            <line x1="52" y1="26" x2="52" y2="27"/>
+            <!-- legs -->
+            <line x1="22" y1="52" x2="18" y2="62"/>
+            <line x1="50" y1="52" x2="54" y2="62"/>
+            <!-- light beam -->
+            <path d="M58 34 L68 28 M58 39 L70 39 M58 44 L68 50" stroke-opacity=".4"/>
+          </svg>
+          <span>DARKROOM<br/>PROJECTOR</span>
+        </div>
+        <div class="film-strip" id="film-strip"></div>
+      </div>
+
+      <!-- RIGHT: large view + letters -->
+      <div class="right-panel">
+        <div class="large-view" id="large-view"></div>
+        <div class="letters" id="letters-panel">
+          <div class="letters-head">
+            <h3>互心信笺 · <b>LETTERS FOR TWO</b></h3>
+            <span class="for" id="letter-for">— 选择左侧一张照片 —</span>
+          </div>
+          <div id="letter-body"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast" hidden><span class="dot"></span><span id="toast-msg">已保存</span></div>
+
+<script>
+  var PEOPLE = {
+    a: {name: localStorage.getItem('darkroom.nick.a') || '阿野'},
+    b: {name: localStorage.getItem('darkroom.nick.b') || '林'}
+  };
+  var mnEl = document.getElementById('meter-names');
+  if (mnEl) mnEl.textContent = PEOPLE.a.name + ' ✕ ' + PEOPLE.b.name;
+
+  var TINTS = ['t1','t2','t3','t4'];
+  var rolls = [
+    mkRoll('旅行', 36, 12, ['想去的海','一起看的日出','机场的拥抱']),
+    mkRoll('约会', 24, 16, ['第一次牵手','电影院','雨里的伞']),
+    mkRoll('深夜食堂', 36, 4, ['路边摊','便利店关东煮']),
+    mkRoll('未来的家', 48, 9, ['看房的下午','第一盆植物']),
+  ];
+  var nextRollId = 5;
+  var curRoll = null;
+  var selFrame = -1;
+  var activeWho = 'a';
+
+  function mkRoll(name, total, doneCount, notes) {
+    var frames = [];
+    for (var i = 0; i < total; i++) {
+      var filled = i < doneCount;
+      frames.push({
+        filled: filled,
+        tint: Math.floor(Math.random()*4),
+        title: filled ? (notes && notes[i] ? notes[i] : '一帧心愿') : null,
+        src: null,
+        letters: {a:'', b:''},
+        opened: {a:false, b:false}
+      });
+    }
+    return {id: nextRollId++, name: name, total: total, frames: frames};
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function pct(r) { return Math.round(r.frames.filter(function(f){return f.filled;}).length / r.total * 100); }
+  function doneCount(r) { return r.frames.filter(function(f){return f.filled;}).length; }
+
+  // ===== LIST =====
+  function renderList() {
+    var wrap = document.getElementById('roll-list');
+    wrap.innerHTML = '';
+    rolls.forEach(function(r) {
+      var p = pct(r);
+      var card = document.createElement('div');
+      card.className = 'roll-card';
+
+      // icon
+      var ic = document.createElement('div');
+      ic.className = 'rc-ic';
+      ic.innerHTML = '<svg viewBox="0 0 64 64" fill="none" stroke="#e6a92b" stroke-width="2.2" stroke-linejoin="round"><rect x="14" y="16" width="30" height="40" rx="2"/><rect x="18" y="10" width="22" height="8"/><line x1="18" y1="28" x2="40" y2="28"/><line x1="18" y1="48" x2="40" y2="48"/><circle cx="29" cy="38" r="7"/><path d="M44 24 h8 v24 h-8"/><line x1="48" y1="24" x2="48" y2="48" stroke-dasharray="3 3"/></svg>';
+
+      // info
+      var info = document.createElement('div');
+      info.className = 'rc-info';
+      var h3 = document.createElement('h3');
+      h3.textContent = r.name;
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      var metaB = document.createElement('b');
+      metaB.textContent = String(doneCount(r));
+      meta.appendChild(metaB);
+      meta.appendChild(document.createTextNode(' / ' + r.total + ' 帧已实现 · WISH ROLL'));
+      info.appendChild(h3);
+      info.appendChild(meta);
+
+      // rename button
+      var renBtn = document.createElement('button');
+      renBtn.textContent = '✎';
+      renBtn.style.cssText = 'position:absolute;top:10px;right:48px;background:none;border:none;color:var(--cream-fade);cursor:pointer;font-size:14px;padding:4px;z-index:2';
+      renBtn.title = '重命名';
+      (function(roll, infoEl, h3El) {
+        renBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          startRollRename(infoEl, h3El, roll);
+        });
+      })(r, info, h3);
+
+      // progress
+      var prog = document.createElement('div');
+      prog.className = 'rc-prog';
+      var track = document.createElement('div');
+      track.className = 'prog-track';
+      var fill = document.createElement('div');
+      fill.className = 'prog-fill';
+      fill.style.width = p + '%';
+      track.appendChild(fill);
+      var pctSpan = document.createElement('span');
+      pctSpan.className = 'pct';
+      pctSpan.textContent = p + '%';
+      prog.appendChild(track);
+      prog.appendChild(pctSpan);
+
+      var arrow = document.createElement('div');
+      arrow.className = 'rc-arrow';
+      arrow.textContent = '›';
+
+      card.appendChild(ic);
+      card.appendChild(info);
+      card.appendChild(prog);
+      card.appendChild(arrow);
+      card.appendChild(renBtn);
+
+      card.addEventListener('click', function() { openRoll(r); });
+      wrap.appendChild(card);
+    });
+  }
+
+  function startRollRename(infoEl, h3El, r) {
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = r.name;
+    inp.className = 'rc-name-input';
+    h3El.replaceWith(inp);
+    setTimeout(function() { inp.focus(); inp.select(); }, 0);
+    var done = false;
+    function finish(commit) {
+      if (done) return;
+      done = true;
+      if (commit) { var v = inp.value.trim(); if (v) r.name = v; }
+      renderList();
+    }
+    inp.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+    });
+    inp.addEventListener('blur', function() { finish(true); });
+    inp.addEventListener('click', function(e) { e.stopPropagation(); });
+    inp.addEventListener('mousedown', function(e) { e.stopPropagation(); });
+  }
+
+  // ===== NEW ROLL =====
+  document.getElementById('btn-new').addEventListener('click', function() {
+    var r = mkRoll('新心愿胶卷', 36, 0, []);
+    rolls.unshift(r);
+    renderList();
+    // immediately rename the first card's h3
+    var firstCard = document.querySelector('.roll-card');
+    if (firstCard) {
+      var h3 = firstCard.querySelector('h3');
+      var info = firstCard.querySelector('.rc-info');
+      if (h3 && info) startRollRename(info, h3, r);
+    }
+    showToast('✓ 新胶卷已建立，请输入名称');
+  });
+
+  // ===== OPEN / BACK =====
+  function openRoll(r) {
+    curRoll = r; selFrame = -1; activeWho = 'a';
+    document.getElementById('view-list').classList.remove('on');
+    document.getElementById('view-detail').classList.add('on');
+    renderDetail();
+  }
+  document.getElementById('back').addEventListener('click', function() {
+    document.getElementById('view-detail').classList.remove('on');
+    document.getElementById('view-list').classList.add('on');
+    renderList();
+  });
+
+  // ===== DETAIL =====
+  function renderDetail() {
+    var r = curRoll;
+    var p = pct(r);
+    document.getElementById('d-name').textContent = r.name;
+    document.getElementById('d-meta').textContent = 'WISH ROLL · ' + r.total + ' EXP · 已实现 ' + doneCount(r);
+    document.getElementById('d-pct').textContent = p + '%';
+    document.getElementById('d-fill').style.width = p + '%';
+    renderStrip();
+    renderLargeView();
+    renderLetters();
+  }
+
+  // ===== FILMSTRIP (left) =====
+  function renderStrip() {
+    var strip = document.getElementById('film-strip');
+    strip.innerHTML = '';
+    curRoll.frames.forEach(function(f, i) {
+      var cell = document.createElement('div');
+      cell.className = 'strip-cell ' + (f.filled ? 'filled ' + TINTS[f.tint%4] : 'empty') + (i === selFrame ? ' sel' : '');
+
+      var idx = document.createElement('span');
+      idx.className = 'sidx';
+      idx.textContent = String(i+1).padStart(2,'0');
+      cell.appendChild(idx);
+
+      if (f.filled) {
+        if (f.src) {
+          var img = document.createElement('img');
+          img.src = f.src;
+          img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+          img.alt = '';
+          cell.appendChild(img);
+        }
+        var seal = document.createElement('span');
+        seal.className = 'sseal';
+        seal.textContent = '✉';
+        cell.appendChild(seal);
+        // delete button
+        var delBtn = document.createElement('button');
+        delBtn.className = 'cell-del';
+        delBtn.textContent = '✕';
+        delBtn.title = '删除此照片';
+        (function(frameIdx) {
+          delBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!confirm('删除这张心愿照片？')) return;
+            var fr = curRoll.frames[frameIdx];
+            fr.filled = false; fr.src = null; fr.title = null;
+            fr.letters = {a:'', b:''}; fr.opened = {a:false, b:false};
+            if (selFrame === frameIdx) selFrame = -1;
+            renderDetail();
+            showToast('✓ 已删除');
+          });
+        })(i);
+        cell.appendChild(delBtn);
+        (function(idx2){ cell.addEventListener('click', function(){ selectFrame(idx2); }); })(i);
+      } else {
+        var plus = document.createElement('span');
+        plus.className = 'splus';
+        plus.textContent = '＋';
+        cell.appendChild(plus);
+        // file input overlay for this specific empty cell
+        var finput = document.createElement('input');
+        finput.type = 'file';
+        finput.accept = 'image/*';
+        finput.style.cssText = 'position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2';
+        (function(frameIdx) {
+          finput.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+              var frame = curRoll.frames[frameIdx];
+              frame.filled = true;
+              frame.src = ev.target.result;
+              frame.tint = Math.floor(Math.random()*4);
+              frame.title = file.name.replace(/\.[^.]+$/, '') || '一帧心愿';
+              renderDetail();
+              selectFrame(frameIdx);
+              showToast('✓ 心愿照片已上传');
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+          });
+        })(i);
+        cell.appendChild(finput);
+      }
+      strip.appendChild(cell);
+    });
+  }
+
+  // upload-photo in toolbar: fills next empty frame
+  document.getElementById('upload-photo').addEventListener('change', function(e) {
+    if (!curRoll) return;
+    var file = e.target.files[0];
+    if (!file) return;
+    var emptyIdx = -1;
+    for (var j = 0; j < curRoll.frames.length; j++) {
+      if (!curRoll.frames[j].filled) { emptyIdx = j; break; }
+    }
+    if (emptyIdx < 0) { showToast('这卷已经拍满了'); e.target.value = ''; return; }
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var frame = curRoll.frames[emptyIdx];
+      frame.filled = true;
+      frame.src = ev.target.result;
+      frame.tint = Math.floor(Math.random()*4);
+      frame.title = file.name.replace(/\.[^.]+$/, '') || '一帧心愿';
+      renderDetail();
+      selectFrame(emptyIdx);
+      showToast('✓ 心愿照片已上传');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  // ===== LARGE VIEW (right top) =====
+  function renderLargeView() {
+    var lv = document.getElementById('large-view');
+    lv.innerHTML = '';
+    if (selFrame < 0 || !curRoll.frames[selFrame] || !curRoll.frames[selFrame].filled) {
+      var nosel = document.createElement('div');
+      nosel.className = 'lv-empty';
+      var t = document.createElement('div');
+      t.className = 't';
+      t.textContent = '选择左侧一张照片';
+      var s = document.createElement('div');
+      s.className = 's';
+      s.textContent = '点击胶卷格子查看大图与信笺';
+      nosel.appendChild(t); nosel.appendChild(s);
+      lv.appendChild(nosel);
+      return;
+    }
+    var f = curRoll.frames[selFrame];
+    if (f.src) {
+      var img = document.createElement('img');
+      img.src = f.src;
+      img.alt = f.title || '';
+      lv.appendChild(img);
+    } else {
+      var ph = document.createElement('div');
+      ph.style.cssText = 'width:100%;height:100%;background:repeating-linear-gradient(135deg,rgba(230,169,43,.08) 0 8px,transparent 8px 18px),linear-gradient(160deg,#5a3a18,#1c1006)';
+      lv.appendChild(ph);
+    }
+    if (f.title) {
+      var titleDiv = document.createElement('div');
+      titleDiv.className = 'lv-title';
+      titleDiv.textContent = f.title;
+      lv.appendChild(titleDiv);
+    }
+  }
+
+  // ===== SELECT FRAME =====
+  function selectFrame(i) {
+    selFrame = i; activeWho = 'a';
+    renderStrip();
+    renderLargeView();
+    renderLetters();
+  }
+
+  // ===== LETTERS =====
+  function renderLetters() {
+    var body = document.getElementById('letter-body');
+    var forEl = document.getElementById('letter-for');
+    body.innerHTML = '';
+
+    if (selFrame < 0 || !curRoll.frames[selFrame] || !curRoll.frames[selFrame].filled) {
+      forEl.textContent = '— 选择左侧一张照片 —';
+      var nosel = document.createElement('div');
+      nosel.className = 'no-sel';
+      var t = document.createElement('div');
+      t.className = 't';
+      t.textContent = '点开一张照片';
+      var s = document.createElement('div');
+      s.className = 's';
+      s.textContent = '每一帧背面，都封着对方写给你的一段话';
+      nosel.appendChild(t); nosel.appendChild(s);
+      body.appendChild(nosel);
+      return;
+    }
+
+    var f = curRoll.frames[selFrame];
+    forEl.textContent = '帧 ' + String(selFrame+1).padStart(2,'0') + ' · ' + (f.title || '心愿');
+
+    // ltabs
+    var ltabs = document.createElement('div');
+    ltabs.className = 'ltabs';
+    ['a','b'].forEach(function(w) {
+      var tab = document.createElement('div');
+      tab.className = 'ltab ' + w + (activeWho === w ? ' on' : '');
+      tab.setAttribute('data-who', w);
+      var nameSpan = document.createElement('span');
+      nameSpan.textContent = PEOPLE[w].name + ' 的信笺';
+      var emSpan = document.createElement('span');
+      emSpan.className = 'em';
+      emSpan.textContent = f.letters[w].trim().length > 0 ? '● 已写' : '○ 空';
+      tab.appendChild(nameSpan);
+      tab.appendChild(emSpan);
+      tab.addEventListener('click', function() {
+        if (activeWho === w) return;
+        f.opened.a = false; f.opened.b = false;
+        activeWho = w;
+        renderLetters();
+      });
+      ltabs.appendChild(tab);
+    });
+    body.appendChild(ltabs);
+
+    var stage = document.createElement('div');
+    stage.className = 'letter-stage';
+    stage.id = 'letter-stage';
+    body.appendChild(stage);
+    renderStage();
+  }
+
+  function renderStage() {
+    var stage = document.getElementById('letter-stage');
+    if (!stage) return;
+    stage.innerHTML = '';
+    var f = curRoll.frames[selFrame];
+    var who = activeWho;
+    var author = PEOPLE[who].name;
+
+    if (!f.opened[who]) {
+      // sealed
+      var sealed = document.createElement('div');
+      sealed.className = 'sealed';
+      sealed.id = 'sealed';
+      var perfT = document.createElement('div'); perfT.className = 'perf t';
+      var perfB = document.createElement('div'); perfB.className = 'perf b';
+      var tearTop = document.createElement('div'); tearTop.className = 'tear-top';
+      var tearBot = document.createElement('div'); tearBot.className = 'tear-bot';
+      var wax = document.createElement('div'); wax.className = 'wax';
+      var waxSpan = document.createElement('span'); waxSpan.textContent = author.slice(0,1);
+      wax.appendChild(waxSpan);
+      var sealText = document.createElement('div'); sealText.className = 'seal-text';
+      var stB = document.createElement('b'); stB.textContent = author;
+      sealText.appendChild(stB);
+      sealText.appendChild(document.createTextNode(' 封缄的信笺'));
+      var hint = document.createElement('div'); hint.className = 'hint';
+      hint.textContent = '点击 · 撕开胶片封缄';
+      sealed.appendChild(perfT); sealed.appendChild(perfB);
+      sealed.appendChild(tearTop); sealed.appendChild(tearBot);
+      sealed.appendChild(wax); sealed.appendChild(sealText); sealed.appendChild(hint);
+      sealed.addEventListener('click', tearOpen);
+      stage.appendChild(sealed);
+    } else {
+      // opened
+      var opened = document.createElement('div');
+      opened.className = 'opened show';
+      var from = document.createElement('div');
+      from.className = 'from';
+      var fromL = document.createElement('span');
+      var fromB = document.createElement('b'); fromB.textContent = author;
+      fromL.appendChild(document.createTextNode('FROM · '));
+      fromL.appendChild(fromB);
+      var fromR = document.createElement('span');
+      fromR.textContent = '帧 ' + String(selFrame+1).padStart(2,'0') + ' 背面';
+      from.appendChild(fromL); from.appendChild(fromR);
+      var ta = document.createElement('textarea');
+      ta.className = 'letter-text';
+      ta.id = 'letter-text';
+      ta.placeholder = '还没有留下文字…';
+      ta.value = f.letters[who];
+      ta.addEventListener('input', function() { f.letters[who] = ta.value; });
+      var ops = document.createElement('div');
+      ops.className = 'ops';
+      var tip = document.createElement('span'); tip.className = 'tip'; tip.textContent = '手写体 · 内容自动保存';
+      var closeBtn = document.createElement('button');
+      closeBtn.className = 'btn-close';
+      closeBtn.textContent = '▲ 合上';
+      closeBtn.addEventListener('click', tearClose);
+      ops.appendChild(tip); ops.appendChild(closeBtn);
+      opened.appendChild(from); opened.appendChild(ta); opened.appendChild(ops);
+      stage.appendChild(opened);
+    }
+  }
+
+  function tearOpen() {
+    var sealed = document.getElementById('sealed');
+    if (!sealed) return;
+    sealed.classList.add('tearing');
+    void sealed.offsetWidth;
+    requestAnimationFrame(function() { sealed.classList.add('torn'); });
+    setTimeout(function() {
+      curRoll.frames[selFrame].opened[activeWho] = true;
+      renderStage();
+      refreshTabs();
+    }, 580);
+  }
+
+  function tearClose() {
+    var f = curRoll.frames[selFrame];
+    var stage = document.getElementById('letter-stage');
+    if (!stage) return;
+    var author = PEOPLE[activeWho].name;
+    // rebuild sealed in torn state
+    stage.innerHTML = '';
+    var sealed = document.createElement('div');
+    sealed.className = 'sealed tearing torn';
+    sealed.id = 'sealed';
+    var perfT = document.createElement('div'); perfT.className = 'perf t';
+    var perfB = document.createElement('div'); perfB.className = 'perf b';
+    var tearTop = document.createElement('div'); tearTop.className = 'tear-top';
+    var tearBot = document.createElement('div'); tearBot.className = 'tear-bot';
+    var wax = document.createElement('div'); wax.className = 'wax';
+    var waxSpan = document.createElement('span'); waxSpan.textContent = author.slice(0,1);
+    wax.appendChild(waxSpan);
+    var sealText = document.createElement('div'); sealText.className = 'seal-text';
+    var stB = document.createElement('b'); stB.textContent = author;
+    sealText.appendChild(stB); sealText.appendChild(document.createTextNode(' 封缄的信笺'));
+    var hint = document.createElement('div'); hint.className = 'hint'; hint.textContent = '点击 · 撕开胶片封缄';
+    sealed.appendChild(perfT); sealed.appendChild(perfB);
+    sealed.appendChild(tearTop); sealed.appendChild(tearBot);
+    sealed.appendChild(wax); sealed.appendChild(sealText); sealed.appendChild(hint);
+    stage.appendChild(sealed);
+    void sealed.offsetWidth;
+    requestAnimationFrame(function() { sealed.classList.remove('torn'); });
+    setTimeout(function() {
+      sealed.classList.remove('tearing');
+      f.opened[activeWho] = false;
+      sealed.addEventListener('click', tearOpen);
+      refreshTabs();
+    }, 560);
+  }
+
+  function refreshTabs() {
+    var f = curRoll.frames[selFrame];
+    document.querySelectorAll('.ltab').forEach(function(t) {
+      var w = t.getAttribute('data-who');
+      var has = f.letters[w].trim().length > 0;
+      var em = t.querySelector('.em');
+      if (em) em.textContent = has ? '● 已写' : '○ 空';
+      t.classList.toggle('on', w === activeWho);
+      t.classList.toggle('a', w === 'a');
+      t.classList.toggle('b', w === 'b');
+    });
+  }
+
+  // ===== TOAST =====
+  var toast = document.getElementById('toast');
+  var toastMsg = document.getElementById('toast-msg');
+  var tt;
+  function showToast(m) { toastMsg.textContent=m; toast.hidden=false; clearTimeout(tt); tt=setTimeout(function(){toast.hidden=true;},1900); }
+
+  // seed demo letter
+  rolls[0].frames[0].letters.a = '说好了，明年春天一定要去看一次真正的海。\n你说你想在沙滩上写我们的名字，等浪来把它带走。';
+  rolls[0].frames[0].letters.b = '我偷偷把机票钱存好了，别告诉你。\n到时候让你负责拍照就行。';
+
+  renderList();
+</script>
+</body>
+</html>

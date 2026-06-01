@@ -1,0 +1,681 @@
+﻿<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<title>情侣相册 · DARKROOM</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root{
+    --ink-0:#0a0805;
+    --ink-1:#120e08;
+    --ink-2:#1a140c;
+    --ink-3:#241c11;
+    --ink-4:#3a2e1c;
+    --kodak:#e6a92b;
+    --kodak-deep:#b87a18;
+    --amber:#d99845;
+    --brass-hi:#f0c870;
+    --brass:#c88e2a;
+    --brass-lo:#6a4a14;
+    --cream:#ebe1c8;
+    --cream-dim:#a89a78;
+    --cream-fade:#6d6149;
+    --red:#c4523c;
+    --sensor-glow:rgba(120,200,180,.08);
+    --typewriter:'Special Elite','Courier Prime',ui-monospace,monospace;
+    --mono:'Courier Prime',ui-monospace,monospace;
+    --serif:'EB Garamond','Noto Serif SC',serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100vh;background:var(--ink-0);color:var(--cream);font-family:var(--serif);overflow-x:hidden}
+  body{
+    padding:32px;
+    background:
+      radial-gradient(900px 600px at 20% 0%, #1c1408 0%, transparent 60%),
+      radial-gradient(800px 500px at 110% 100%, #1a0e04 0%, transparent 55%),
+      var(--ink-0);
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:200;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.82  0 0 0 0 0.55  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity:.07;mix-blend-mode:screen;
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:201;
+    background:radial-gradient(120% 90% at 50% 50%, transparent 50%, rgba(0,0,0,.7) 100%);
+  }
+
+  .app{
+    max-width:1500px;min-width:1200px;margin:0 auto;
+    border:1px solid #2c2316;
+    background:linear-gradient(180deg,#14110c,#100d09);
+    box-shadow:0 60px 120px -40px rgba(0,0,0,.9), 0 0 0 1px #0a0805, inset 0 1px 0 rgba(235,225,200,.04);
+  }
+
+  /* ============== TOP ============== */
+  .chrome{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 28px;border-bottom:1px solid #221d14;
+    background:linear-gradient(180deg,#181410,#100d09);
+  }
+  .chrome .lights{display:flex;gap:8px}
+  .chrome .lights i{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.5);display:inline-block}
+  .chrome .lights i.r{background:#7a3a2c} .chrome .lights i.y{background:#a88a4a} .chrome .lights i.g{background:#4a6a48}
+  .brand{display:flex;align-items:center;gap:14px;color:var(--cream-dim)}
+  .brand .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--cream-fade)}
+  .brand .crumb b{color:var(--kodak);font-weight:400}
+  .brand .title{font-family:var(--typewriter);font-size:22px;color:var(--cream);letter-spacing:.12em}
+  .brand .title span.dot{color:var(--kodak)}
+
+  .counter{
+    display:flex;align-items:center;gap:18px;
+    font-family:var(--mono);font-size:11px;color:var(--cream-fade);letter-spacing:.22em
+  }
+  .counter .cur{
+    font-family:var(--typewriter);font-size:28px;color:var(--cream);letter-spacing:.06em;line-height:1;
+  }
+  .counter .cur em{font-style:normal;color:var(--kodak)}
+  .counter .of{font-size:14px;color:var(--cream-fade);font-family:var(--typewriter);letter-spacing:.04em}
+
+  /* ============== STAGE ============== */
+  .stage{
+    padding:60px 70px 80px;
+    display:grid;grid-template-columns:1fr 360px;gap:64px;
+    align-items:center;min-height:760px;
+    position:relative;
+  }
+  /* faint horizontal grid lines decoration */
+  .stage::before{
+    content:"";position:absolute;inset:24px;pointer-events:none;
+    background:
+      linear-gradient(90deg, transparent 99%, rgba(230,169,43,.08) 100%) 0 0/120px 100%,
+      linear-gradient(0deg, transparent 99%, rgba(230,169,43,.06) 100%) 0 0/100% 120px;
+    opacity:.4;
+  }
+
+  /* ===== CMOS SENSOR ===== */
+  .sensor-wrap{
+    display:flex;flex-direction:column;align-items:center;gap:20px;position:relative;z-index:1;
+  }
+  .sensor-tag{
+    display:flex;align-items:center;gap:14px;
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.32em;
+  }
+  .sensor-tag .live{display:inline-flex;align-items:center;gap:6px;color:var(--red)}
+  .sensor-tag .live i{
+    width:7px;height:7px;border-radius:50%;background:var(--red);
+    box-shadow:0 0 8px var(--red);animation:pulse 2s infinite
+  }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  .sensor{
+    width:540px;height:540px;position:relative;
+    background:
+      /* outer dark frame ring */
+      radial-gradient(circle at 30% 20%, #2a2014 0%, #14100a 60%);
+    padding:30px;
+    border-radius:6px;
+    box-shadow:
+      inset 0 2px 0 rgba(240,200,112,.18),
+      inset 0 -2px 0 rgba(0,0,0,.6),
+      inset 2px 0 0 rgba(240,200,112,.06),
+      inset -2px 0 0 rgba(0,0,0,.5),
+      0 30px 60px -20px rgba(0,0,0,.9),
+      0 0 0 1px #0a0805;
+  }
+  /* metallic frame */
+  .sensor::before{
+    content:"";position:absolute;inset:0;border-radius:6px;
+    background:
+      linear-gradient(135deg,
+        var(--brass-hi) 0%,
+        var(--brass) 18%,
+        #5a3e10 50%,
+        var(--brass) 82%,
+        var(--brass-hi) 100%);
+    z-index:-1;
+    /* knurled edge */
+    box-shadow:
+      0 0 0 1px #2a1c08,
+      0 0 0 4px #1a1208,
+      0 0 0 5px #3a2814;
+  }
+  /* corner screws */
+  .screw{
+    position:absolute;width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #d4a050, #5a3a14 70%, #2a1808);
+    box-shadow:inset 0 1px 1px rgba(255,220,150,.5), inset 0 -1px 1px rgba(0,0,0,.6), 0 1px 1px rgba(0,0,0,.5);
+    z-index:3;
+  }
+  .screw::before{
+    content:"";position:absolute;inset:3px;background:#2a1808;
+    clip-path:polygon(40% 0,60% 0,60% 40%,100% 40%,100% 60%,60% 60%,60% 100%,40% 100%,40% 60%,0 60%,0 40%,40% 40%);
+    opacity:.55;
+  }
+  .screw.tl{top:8px;left:8px} .screw.tr{top:8px;right:8px}
+  .screw.bl{bottom:8px;left:8px} .screw.br{bottom:8px;right:8px}
+
+  /* sensor inner photo-sensitive area */
+  .sensor-inner{
+    position:relative;width:100%;height:100%;
+    background:
+      /* iridescent dark green CMOS tint */
+      radial-gradient(circle at 30% 30%, rgba(120,200,180,.18) 0%, transparent 45%),
+      radial-gradient(circle at 75% 70%, rgba(120,180,220,.12) 0%, transparent 50%),
+      linear-gradient(135deg, #0a0e0c 0%, #050605 50%, #080a08 100%);
+    box-shadow:inset 0 0 0 1px #2a2014, inset 0 0 40px rgba(0,0,0,.6);
+    overflow:hidden;
+  }
+  /* pixel grid */
+  .sensor-inner::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      linear-gradient(90deg, transparent 0 3px, rgba(120,200,180,.04) 3px 4px) 0 0/4px 100%,
+      linear-gradient(0deg,  transparent 0 3px, rgba(120,200,180,.04) 3px 4px) 0 0/100% 4px;
+    opacity:.5;
+  }
+  /* moving scan line — removed per request */
+
+  /* corner crop marks */
+  .crop{position:absolute;width:24px;height:24px;border:1px solid rgba(230,169,43,.4);z-index:2}
+  .crop.tl{top:14px;left:14px;border-right:none;border-bottom:none}
+  .crop.tr{top:14px;right:14px;border-left:none;border-bottom:none}
+  .crop.bl{bottom:14px;left:14px;border-right:none;border-top:none}
+  .crop.br{bottom:14px;right:14px;border-left:none;border-top:none}
+
+  .sensor-content{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:22px;padding:30px;text-align:center;z-index:2;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .sensor-content.hide{opacity:0;transform:scale(.94)}
+
+  .sensor-icon{
+    width:170px;height:130px;display:flex;align-items:center;justify-content:center;
+    filter:drop-shadow(0 6px 12px rgba(0,0,0,.6));
+  }
+  .sensor-icon svg{width:100%;height:100%;display:block}
+
+  .sensor-title{
+    font-family:var(--typewriter);font-size:42px;color:var(--cream);letter-spacing:.12em;line-height:1.1;
+    text-shadow:0 0 14px rgba(230,169,43,.18);
+  }
+  .sensor-sub{
+    font-family:var(--serif);font-style:italic;font-size:19px;color:var(--kodak);letter-spacing:.06em;
+  }
+  .sensor-foot{
+    position:absolute;bottom:14px;left:0;right:0;text-align:center;
+    font-family:var(--mono);font-size:9px;color:rgba(230,169,43,.5);letter-spacing:.32em;
+  }
+  .sensor-label{
+    position:absolute;top:14px;left:14px;
+    font-family:var(--mono);font-size:9px;color:rgba(230,169,43,.55);letter-spacing:.28em;
+  }
+  .sensor-frame-no{
+    position:absolute;top:14px;right:14px;
+    font-family:var(--mono);font-size:9px;color:rgba(230,169,43,.55);letter-spacing:.28em;
+  }
+
+  /* shutter aperture overlay (6 blades) */
+  .iris{
+    position:absolute;inset:0;pointer-events:none;z-index:5;
+    display:flex;align-items:center;justify-content:center;opacity:0;
+  }
+  .iris .blade{
+    position:absolute;width:140%;height:140%;
+    background:#0a0805;
+    clip-path:polygon(50% -10%, 110% 60%, 50% 130%);
+    transform-origin:50% 50%;
+    transition:transform .25s cubic-bezier(.6,0,.2,1);
+  }
+  .iris .blade:nth-child(1){transform:rotate(0deg) translate(0,-90%)}
+  .iris .blade:nth-child(2){transform:rotate(60deg) translate(0,-90%)}
+  .iris .blade:nth-child(3){transform:rotate(120deg) translate(0,-90%)}
+  .iris .blade:nth-child(4){transform:rotate(180deg) translate(0,-90%)}
+  .iris .blade:nth-child(5){transform:rotate(240deg) translate(0,-90%)}
+  .iris .blade:nth-child(6){transform:rotate(300deg) translate(0,-90%)}
+  .iris.closing{opacity:1}
+  .iris.closing .blade:nth-child(1){transform:rotate(20deg)  translate(0,-12%)}
+  .iris.closing .blade:nth-child(2){transform:rotate(80deg)  translate(0,-12%)}
+  .iris.closing .blade:nth-child(3){transform:rotate(140deg) translate(0,-12%)}
+  .iris.closing .blade:nth-child(4){transform:rotate(200deg) translate(0,-12%)}
+  .iris.closing .blade:nth-child(5){transform:rotate(260deg) translate(0,-12%)}
+  .iris.closing .blade:nth-child(6){transform:rotate(320deg) translate(0,-12%)}
+
+  /* status indicators below sensor */
+  .sensor-bar{
+    display:flex;align-items:center;justify-content:space-between;width:540px;
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.28em;
+  }
+  .sensor-bar .dots{display:flex;gap:10px}
+  .dot-i{
+    width:10px;height:10px;border:1px solid var(--cream-fade);border-radius:50%;
+  }
+  .dot-i.on{background:var(--kodak);border-color:var(--kodak);box-shadow:0 0 10px var(--kodak)}
+
+  /* ============== RIGHT · SHUTTER ============== */
+  .shutter-col{
+    display:flex;flex-direction:column;align-items:center;gap:34px;position:relative;z-index:1;
+  }
+  .shutter-col .hint{
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.28em;text-align:center;
+    line-height:1.7;
+  }
+  .shutter-col .hint b{color:var(--kodak);font-weight:400}
+
+  .shutter{
+    position:relative;width:260px;height:260px;cursor:pointer;
+    -webkit-user-select:none;user-select:none;
+    transition:transform .12s ease;
+  }
+  .shutter:active{transform:translateY(2px)}
+
+  /* outer brass collar */
+  .shutter .collar{
+    position:absolute;inset:0;border-radius:50%;
+    background:
+      conic-gradient(from 0deg,
+        #6a4a14, #d4a050 8%, #6a4a14 16%, #d4a050 24%, #6a4a14 32%,
+        #d4a050 40%, #6a4a14 48%, #d4a050 56%, #6a4a14 64%,
+        #d4a050 72%, #6a4a14 80%, #d4a050 88%, #6a4a14 96%, #6a4a14 100%);
+    box-shadow:
+      0 0 0 2px #1a1208,
+      0 30px 60px -10px rgba(0,0,0,.9),
+      inset 0 2px 0 rgba(255,220,150,.5),
+      inset 0 -2px 0 rgba(0,0,0,.6);
+  }
+  /* inner gold ring */
+  .shutter .ring{
+    position:absolute;inset:18px;border-radius:50%;
+    background:
+      radial-gradient(circle at 30% 25%,
+        var(--brass-hi) 0%, var(--brass) 35%, #5a3e10 80%, #3a2810 100%);
+    box-shadow:
+      inset 0 3px 4px rgba(255,220,150,.4),
+      inset 0 -4px 6px rgba(0,0,0,.6),
+      0 0 0 1px #2a1c08;
+  }
+  /* engraved label */
+  .shutter .ring::before{
+    content:"SHUTTER";position:absolute;top:18px;left:0;right:0;text-align:center;
+    font-family:var(--typewriter);font-size:11px;color:#3a2410;letter-spacing:.4em;
+    text-shadow:0 1px 0 rgba(255,220,150,.4);
+  }
+  .shutter .ring::after{
+    content:"PRESS";position:absolute;bottom:18px;left:0;right:0;text-align:center;
+    font-family:var(--mono);font-size:9px;color:#3a2410;letter-spacing:.42em;
+    text-shadow:0 1px 0 rgba(255,220,150,.4);
+  }
+  /* central red button */
+  .shutter .core{
+    position:absolute;inset:46px;border-radius:50%;
+    background:
+      radial-gradient(circle at 35% 30%, #e26a4a 0%, #a83020 60%, #5a1808 100%);
+    box-shadow:
+      inset 0 6px 10px rgba(255,180,140,.4),
+      inset 0 -6px 10px rgba(0,0,0,.6),
+      0 4px 8px rgba(0,0,0,.6),
+      0 0 0 1px #2a1208;
+    display:flex;align-items:center;justify-content:center;
+    transition:box-shadow .15s, transform .15s, inset .15s;
+  }
+  .shutter .core::before{
+    content:"";position:absolute;width:36px;height:36px;border-radius:50%;
+    border:1.5px solid rgba(255,220,180,.4);
+    box-shadow:inset 0 0 6px rgba(255,180,140,.6);
+  }
+  .shutter .core::after{
+    content:"●";color:rgba(255,220,180,.85);font-size:16px;
+    text-shadow:0 1px 2px rgba(0,0,0,.6);
+  }
+  .shutter:active .core{
+    box-shadow:
+      inset 0 -6px 10px rgba(255,180,140,.3),
+      inset 0 6px 10px rgba(0,0,0,.7),
+      0 1px 2px rgba(0,0,0,.6),
+      0 0 0 1px #2a1208;
+    transform:scale(.97);
+  }
+  .shutter.firing .core{
+    box-shadow:
+      0 0 22px var(--red),
+      inset 0 6px 10px rgba(255,180,140,.6),
+      inset 0 -6px 10px rgba(0,0,0,.6),
+      0 0 0 1px #2a1208;
+  }
+
+  .meter-row{
+    display:flex;align-items:center;justify-content:space-between;width:260px;
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.24em;
+  }
+  .meter-row .v{color:var(--kodak)}
+
+  /* nickname input */
+  .nick{display:flex;flex-direction:column;align-items:center;gap:12px;width:280px}
+  .nick-lbl{font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.3em}
+  .nick-row{display:flex;align-items:center;gap:14px}
+  .nick-row .nick-name{
+    min-width:80px;text-align:center;color:var(--cream);
+    font-family:var(--typewriter);font-size:20px;letter-spacing:.06em;padding:8px 6px;
+    border-bottom:1px solid transparent;outline:none;cursor:text;
+    transition:border-color .2s;
+  }
+  .nick-row .nick-name:hover{border-bottom-color:rgba(230,169,43,.35)}
+  .nick-row .nick-name:focus{border-bottom-color:var(--kodak);color:var(--brass-hi)}
+  .nick-row .amp{font-family:var(--serif);font-style:italic;font-size:26px;color:var(--kodak)}
+  .nick-hint{font-family:var(--mono);font-size:9px;color:var(--cream-fade);letter-spacing:.22em;opacity:.55}
+
+  /* small filmstrip footer */
+  .footstrip{
+    background:#050402;border-top:1px solid #1a120a;
+    padding:10px 0;width:100%;
+  }
+  .footstrip .holes{display:flex;justify-content:space-around;padding:0 24px;height:10px;align-items:center}
+  .footstrip .holes i{width:20px;height:7px;background:#0a0805;border-radius:2px;box-shadow:inset 0 1px 1px rgba(0,0,0,.9)}
+
+  .footline{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 28px;font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:var(--cream-fade);
+  }
+  .footline .lbl{color:var(--kodak-deep)}
+  .back-btn{
+    font-family:var(--mono);font-size:10px;color:var(--cream-fade);letter-spacing:.22em;
+    text-decoration:none;padding:5px 10px;border:1px solid rgba(200,169,110,.15);
+    border-radius:3px;transition:color .15s,border-color .15s;white-space:nowrap;
+  }
+  .back-btn:hover{color:var(--kodak);border-color:rgba(230,169,43,.4)}
+
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- TOP -->
+    <div class="chrome">
+      <div style="display:flex;align-items:center;gap:18px">
+        <div class="lights"><i class="r"></i><i class="y"></i><i class="g"></i></div>
+        <a class="back-btn" href="index.html">← 返回</a>
+        <div class="brand">
+          <span class="crumb">DARKROOM / <b>COUPLE · 情侣相册</b></span>
+          <span class="title">N° 03<span class="dot">.</span></span>
+        </div>
+      </div>
+      <div class="counter">
+        <span>MODE</span>
+        <div class="cur"><em id="counter-cur">1</em><span class="of"> / 2</span></div>
+        <span id="counter-name">TWO ROLLS</span>
+      </div>
+    </div>
+
+    <!-- STAGE -->
+    <div class="stage">
+
+      <!-- CMOS SENSOR -->
+      <section class="sensor-wrap">
+        <div class="sensor-tag">
+          <span class="live"><i></i>SENSOR LIVE</span>
+          <span>·</span>
+          <span>FULL FRAME · 24×24mm</span>
+          <span>·</span>
+          <span>ISO 400</span>
+        </div>
+
+        <div class="sensor">
+          <span class="screw tl"></span><span class="screw tr"></span>
+          <span class="screw bl"></span><span class="screw br"></span>
+
+          <div class="sensor-inner">
+            <span class="sensor-label" id="s-label">▸ MODE 01</span>
+            <span class="sensor-frame-no" id="s-frame">001 / 002</span>
+            <div class="crop tl"></div><div class="crop tr"></div>
+            <div class="crop bl"></div><div class="crop br"></div>
+
+            <div class="sensor-content" id="s-content"></div>
+
+            <span class="sensor-foot" id="s-foot">DARKROOM · CMOS · 24.5MP · CAPTURE READY</span>
+
+            <!-- iris -->
+            <div class="iris" id="iris">
+              <span class="blade"></span><span class="blade"></span><span class="blade"></span>
+              <span class="blade"></span><span class="blade"></span><span class="blade"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sensor-bar">
+          <span>SHUTTER 1/125</span>
+          <div class="dots">
+            <span class="dot-i on" data-i="0"></span>
+            <span class="dot-i" data-i="1"></span>
+          </div>
+          <span>ƒ/2.8 · AWB</span>
+        </div>
+      </section>
+
+      <!-- SHUTTER COLUMN -->
+      <section class="shutter-col">
+        <div class="hint">
+          按下快门<br/>
+          <b>切换模式</b>
+        </div>
+
+        <div class="shutter" id="shutter" role="button" aria-label="按下快门切换模式" tabindex="0">
+          <div class="collar"></div>
+          <div class="ring"></div>
+          <div class="core"></div>
+        </div>
+
+        <div class="nick">
+          <div class="nick-lbl">情侣昵称</div>
+          <div class="nick-row">
+            <span class="nick-name" id="nick-a" contenteditable="true" spellcheck="false">阿野</span>
+            <span class="amp">&amp;</span>
+            <span class="nick-name" id="nick-b" contenteditable="true" spellcheck="false">林</span>
+          </div>
+          <div class="nick-hint">点击名字可编辑</div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="footstrip">
+      <div class="holes">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+    <div class="footline">
+      <span>DARKROOM · v2.4 · COUPLE EDITION</span>
+      <span><span class="lbl">EST</span> · 2026 · MADE WITH SILVER HALIDE</span>
+      <span>FOR TWO</span>
+    </div>
+  </div>
+
+<script>
+  // ===== Three modes =====
+  const modes = [
+    {
+      code: 'M·01',
+      label: '▸ MODE 01',
+      frame: '001 / 002',
+      shortName: 'TWO ROLLS',
+      title: '彼此的一天',
+      sub: 'Two Rolls · One Day',
+      foot: '两个人 · 同一天 · 各自一卷',
+      icon: `
+        <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+          <g fill="none" stroke="#e6a92b" stroke-width="2.4" stroke-linecap="square">
+            <!-- left roll -->
+            <rect x="14" y="20" width="74" height="92" rx="2"/>
+            <rect x="20" y="14" width="62" height="12"/>
+            <line x1="20" y1="40" x2="82" y2="40"/>
+            <line x1="20" y1="92" x2="82" y2="92"/>
+            <circle cx="51" cy="66" r="14"/>
+            <circle cx="51" cy="66" r="4" fill="#e6a92b"/>
+            <!-- right roll -->
+            <rect x="112" y="20" width="74" height="92" rx="2"/>
+            <rect x="118" y="14" width="62" height="12"/>
+            <line x1="118" y1="40" x2="180" y2="40"/>
+            <line x1="118" y1="92" x2="180" y2="92"/>
+            <circle cx="149" cy="66" r="14"/>
+            <circle cx="149" cy="66" r="4" fill="#e6a92b"/>
+          </g>
+          <!-- subtle film perforations top -->
+          <g fill="#e6a92b" opacity=".55">
+            <rect x="22" y="30" width="4" height="4"/><rect x="32" y="30" width="4" height="4"/>
+            <rect x="42" y="30" width="4" height="4"/><rect x="52" y="30" width="4" height="4"/>
+            <rect x="62" y="30" width="4" height="4"/><rect x="72" y="30" width="4" height="4"/>
+            <rect x="120" y="30" width="4" height="4"/><rect x="130" y="30" width="4" height="4"/>
+            <rect x="140" y="30" width="4" height="4"/><rect x="150" y="30" width="4" height="4"/>
+            <rect x="160" y="30" width="4" height="4"/><rect x="170" y="30" width="4" height="4"/>
+          </g>
+        </svg>`
+    },
+    {
+      code: 'M·02',
+      label: '▸ MODE 02',
+      frame: '002 / 002',
+      shortName: 'WISH LIST',
+      title: '心愿胶卷',
+      sub: 'Wish List · Together',
+      foot: '想去的地方 · 想拍的画面',
+      icon: `
+        <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="#e6a92b" stroke-width="2.4" fill="none" stroke-linecap="square" stroke-linejoin="round">
+            <!-- film canister -->
+            <rect x="36" y="32" width="92" height="76" rx="3"/>
+            <rect x="42" y="24" width="80" height="14"/>
+            <line x1="42" y1="50" x2="122" y2="50"/>
+            <line x1="42" y1="92" x2="122" y2="92"/>
+            <!-- perforation strips -->
+            <g fill="#e6a92b" opacity=".55" stroke="none">
+              <rect x="46" y="42" width="4" height="4"/><rect x="56" y="42" width="4" height="4"/>
+              <rect x="66" y="42" width="4" height="4"/><rect x="76" y="42" width="4" height="4"/>
+              <rect x="86" y="42" width="4" height="4"/><rect x="96" y="42" width="4" height="4"/>
+              <rect x="106" y="42" width="4" height="4"/><rect x="116" y="42" width="4" height="4"/>
+            </g>
+            <!-- heart overlapping canister center -->
+            <path d="M82 64 C 82 56, 92 52, 96 60 C 100 52, 110 56, 110 64 C 110 74, 96 86, 96 86 C 96 86, 82 74, 82 64 Z"
+                  fill="#e6a92b" stroke="none"/>
+            <!-- small heart on tab -->
+            <path d="M146 56 C 146 50, 154 48, 156 54 C 158 48, 166 50, 166 56 C 166 62, 156 70, 156 70 C 156 70, 146 62, 146 56 Z"
+                  fill="#d99845" stroke="none" opacity=".9"/>
+          </g>
+        </svg>`
+    },
+  ];
+
+  let idx = 0;
+  let firing = false;
+
+  const $ = id => document.getElementById(id);
+  const sContent = $('s-content');
+  const iris = $('iris');
+  const shutter = $('shutter');
+
+  function paint(i){
+    const m = modes[i];
+    sContent.innerHTML = `
+      <div class="sensor-icon">${m.icon}</div>
+      <div class="sensor-title">${m.title}</div>
+      <div class="sensor-sub">${m.sub}</div>
+    `;
+    // mode-specific destinations on click
+    const DEST = ['two-rolls.html', 'wishlist.html'];
+    if (DEST[i]){
+      sContent.style.cursor = 'pointer';
+      sContent.title = '进入「' + m.title + '」';
+      sContent.onclick = () => { if (!firing) location.href = DEST[i]; };
+    } else {
+      sContent.style.cursor = '';
+      sContent.title = '';
+      sContent.onclick = null;
+    }
+    $('s-label').textContent = m.label;
+    $('s-frame').textContent = m.frame;
+    $('s-foot').textContent = m.foot;
+    $('counter-cur').textContent = i + 1;
+    $('counter-name').textContent = m.shortName;
+    const mc = $('mode-code'); if (mc) mc.textContent = m.code;
+    document.querySelectorAll('.dot-i').forEach((d, di) => d.classList.toggle('on', di === i));
+  }
+
+  function fire(){
+    if (firing) return;
+    firing = true;
+    shutter.classList.add('firing');
+
+    // 1. close blades
+    iris.classList.add('closing');
+
+    // 2. mid-close: swap content + ramp scan line
+    setTimeout(() => {
+      sContent.classList.add('hide');
+      setTimeout(() => {
+        idx = (idx + 1) % modes.length;
+        paint(idx);
+        sContent.classList.remove('hide');
+      }, 120);
+    }, 220);
+
+    // 3. open blades
+    setTimeout(() => {
+      iris.classList.remove('closing');
+    }, 500);
+
+    // 4. unlock
+    setTimeout(() => {
+      shutter.classList.remove('firing');
+      firing = false;
+    }, 750);
+  }
+
+  shutter.addEventListener('click', fire);
+  shutter.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); }
+  });
+  window.addEventListener('keydown', e => {
+    if (e.target === document.body && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault(); fire();
+    }
+  });
+
+  // initial paint
+  paint(0);
+
+  // ===== Editable nicknames =====
+  const nickA = $('nick-a');
+  const nickB = $('nick-b');
+  const NICK_KEY = { a: 'darkroom.nick.a', b: 'darkroom.nick.b' };
+
+  function loadNick(el, key, fallback) {
+    el.textContent = localStorage.getItem(key) || fallback;
+  }
+  function saveNick(el, key) {
+    const val = el.textContent.trim();
+    if (val) localStorage.setItem(key, val);
+    else el.textContent = localStorage.getItem(key) || el.textContent;
+  }
+
+  loadNick(nickA, NICK_KEY.a, '阿野');
+  loadNick(nickB, NICK_KEY.b, '林');
+
+  nickA.addEventListener('blur', () => saveNick(nickA, NICK_KEY.a));
+  nickB.addEventListener('blur', () => saveNick(nickB, NICK_KEY.b));
+
+  // 回车失焦
+  [nickA, nickB].forEach(el => {
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); el.blur(); }
+    });
+    // 全选方便修改
+    el.addEventListener('focus', () => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+  });
+</script>
+</body>
+</html>

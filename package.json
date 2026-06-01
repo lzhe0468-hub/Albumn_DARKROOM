@@ -1,0 +1,46 @@
+{
+  "name": "darkroom",
+  "version": "1.0.0",
+  "description": "DARKROOM - A personal photo album desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.darkroom.album",
+    "productName": "DARKROOM",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**",
+      "!dist/**",
+      "!*.zip",
+      "!.thumbnail"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "@electron/asar": "^4.2.0",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}
