@@ -4,6 +4,8 @@ A vibe coding work for every photographer or any couples that want to mark down 
 
 一个从个人摄影习惯出发的本地桌面相册。以胶卷组织照片，用逐张灵感本记录观看与拍摄的感受，也为同一台设备上的两个人保留照片、心情和信笺。延续暗房、胶片与纸张的视觉风格。
 
+**[版本下载与历史版本 →](RELEASES.md)**
+
 ## 使用
 
 支持 Windows 10 / 11 x64。发布包已包含运行环境，日常使用无需服务器、账户或登录。
@@ -12,7 +14,7 @@ A vibe coding work for every photographer or any couples that want to mark down 
 - 免安装版：`DARKROOM-2.0.0-win-x64-portable.exe`。
 - 本地构建后的目录版：`dist/win-unpacked/DARKROOM.exe`。
 
-下载入口以本仓库 [Releases](https://github.com/lzhe0468-hub/Albumn_DARKROOM/releases) 的实际附件为准。源码归档需要自行构建；`dist/` 和 `node_modules/` 不提交到 Git。
+安装包、免安装包与历史源码统一列在[版本下载页](RELEASES.md)。源码归档需要自行构建；`dist/` 和 `node_modules/` 不提交到 Git。
 
 首次使用先导入少量照片，填写评分和文字，退出重开确认后再批量整理。首页“照片库位置”可以更改保存位置、打开已有库或在文件夹中查看。
 
