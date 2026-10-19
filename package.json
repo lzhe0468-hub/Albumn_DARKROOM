@@ -1,11 +1,17 @@
 {
   "name": "darkroom",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "DARKROOM - A personal photo album desktop app",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win --x64"
+    "test": "node scripts/test.cjs",
+    "test:runtime": "node scripts/test-runtime.cjs",
+    "pack:local": "node scripts/package-local.cjs",
+    "dist": "node scripts/dist.cjs",
+    "check:release": "node scripts/check-release.cjs",
+    "postinstall": "node scripts/ensure-runtime.cjs",
+    "setup:runtime": "node scripts/ensure-runtime.cjs"
   },
   "build": {
     "appId": "com.darkroom.album",
@@ -28,19 +34,51 @@
       "icon": "build/icon.ico"
     },
     "files": [
-      "**/*",
-      "!node_modules/**",
-      "!dist/**",
-      "!*.zip",
-      "!.thumbnail"
+      "index.html",
+      "Album.html",
+      "couple.html",
+      "journal.html",
+      "journal-page.js",
+      "two-rolls.html",
+      "wishlist.html",
+      "main.js",
+      "preload.js",
+      "album-store.js",
+      "document-store.js",
+      "storage-safety.js",
+      "upgrade-backup.js",
+      "app-files.js",
+      "text-storage.js",
+      "people-storage.js",
+      "library-manager.js",
+      "library-settings.js",
+      "photo-metadata.js",
+      "package.json",
+      "THIRD_PARTY_NOTICES.md",
+      "fonts/**",
+      "build/**",
+      "vendor/**"
     ],
     "directories": {
       "output": "dist"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "DARKROOM-${version}-win-${arch}-setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "DARKROOM-${version}-win-${arch}-portable.${ext}"
     }
   },
   "devDependencies": {
-    "@electron/asar": "^4.2.0",
-    "electron": "^31.0.0",
-    "electron-builder": "^24.0.0"
-  }
+    "@electron/asar": "4.2.0",
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "author": "lzhe0468-hub"
 }

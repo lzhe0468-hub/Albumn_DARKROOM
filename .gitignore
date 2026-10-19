@@ -1,2 +1,38 @@
-node_modules/
-dist/
+/node_modules/
+/dist/
+tests/.runtime/
+tests/.text-runtime/
+tests/.library-runtime/
+tests/.store-*/
+tests/.electron/
+.packaged-app/
+tests/*.tgz
+tests/.exif-runtime/
+tests/.journal-runtime/
+tests/.safety-runtime/
+DARKROOM照片库/
+album-library/
+.upgrade-backups/
+library-location.json*
+
+# Local development configuration and reference material
+.claude/settings.local.json
+.thumbnail
+/_.zip
+/联想截图_*.jpg
+/album-viewer v2.html
+
+# Generated test runs stay local; only test source is committed.
+tests/.*/
+*.log
+
+# A photo library can have any folder name. Never track its managed data.
+**/.darkroom-library.json
+**/photos/
+**/.upgrade-backups/
+**/.DARKROOM-importing-*/
+**/album.json*
+**/journal.json*
+**/wishlist.json*
+**/calendar.json*
+**/people.json*

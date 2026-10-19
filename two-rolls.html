@@ -387,6 +387,10 @@
     border-radius:3px;transition:color .15s,border-color .15s;white-space:nowrap;
   }
   .back-btn:hover{color:var(--kodak);border-color:rgba(230,169,43,.4)}
+  .calendar-note-dialog{position:fixed;inset:0;margin:auto;width:min(480px,90vw);max-height:85vh;overflow:auto;background:var(--ink-1);color:var(--cream);border:1px solid var(--kodak);padding:24px}
+  .calendar-note-dialog::backdrop{background:rgba(0,0,0,.75)}
+  .calendar-note-dialog textarea{width:100%;margin:16px 0;padding:10px;background:var(--ink-0);color:var(--cream);border:1px solid var(--cream-fade);font:inherit}
+  .calendar-note-dialog button{padding:8px 14px;background:var(--ink-1);color:var(--kodak);border:1px solid var(--kodak);cursor:pointer}
 </style>
 </head>
 <body>
@@ -421,6 +425,11 @@
             <button id="next">›</button>
           </div>
         </div>
+        <div style="display:flex;gap:8px;align-items:center;margin:12px 0">
+          <select id="calendar-year" aria-label="年份" style="background:var(--ink-1);color:var(--kodak);border:1px solid var(--cream-fade);padding:5px"></select>
+          <select id="calendar-month" aria-label="月份" style="background:var(--ink-1);color:var(--kodak);border:1px solid var(--cream-fade);padding:5px"></select>
+          <button id="calendar-today" class="back-btn" style="background:transparent;cursor:pointer">今天</button>
+        </div>
         <div class="cal-month" id="cal-month">五月 <span class="en" id="cal-month-en">May</span></div>
         <div class="cal-sub" id="cal-sub">36 EXP · 已记录 11 天</div>
 
@@ -452,6 +461,15 @@
   <input type="file" id="file-a" accept="image/*" multiple style="position:fixed;opacity:0;pointer-events:none;top:0;left:0;width:1px;height:1px">
   <input type="file" id="file-b" accept="image/*" multiple style="position:fixed;opacity:0;pointer-events:none;top:0;left:0;width:1px;height:1px">
 
+<script src="text-storage.js"></script>
+<dialog class="calendar-note-dialog" id="calendar-note-dialog" aria-labelledby="calendar-note-title">
+  <form id="calendar-note-form">
+    <h2 id="calendar-note-title">写一句记事</h2>
+    <textarea id="calendar-note-input" aria-label="照片记事" rows="4" placeholder="可以留空，或写下今天的心情"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:12px"><button id="calendar-note-cancel" type="button">取消</button><button type="submit">保存</button></div>
+  </form>
+</dialog>
+<script src="people-storage.js"></script>
 <script>
   // ===== MOODS =====
   const MOODS = [
@@ -469,7 +487,7 @@
   ]);
   const TINTS = ['t1','t2','t3','t4'];
 
-  const state = {
+  let state = {
     '2026-05-29': {
       a: { cur:0, mood:'love', shots:[
         {tint:0, note:'清晨第一缕光，她还在睡', src:null},
@@ -493,8 +511,8 @@
   };
 
   const PEOPLE = {
-    a: { name: localStorage.getItem('darkroom.nick.a') || '阿野', role:'A 卷 · 持机者', chip:'ROLL A' },
-    b: { name: localStorage.getItem('darkroom.nick.b') || '林',   role:'B 卷 · 同行者', chip:'ROLL B' },
+    a: { name: window.darkroomPeople.a, role:'A 卷 · 持机者', chip:'ROLL A' },
+    b: { name: window.darkroomPeople.b, role:'B 卷 · 同行者', chip:'ROLL B' },
   };
   const _mn = document.getElementById('meter-names');
   if (_mn) _mn.textContent = '双人共记 · ' + PEOPLE.a.name + ' ✕ ' + PEOPLE.b.name;
@@ -503,6 +521,22 @@
   let viewYear = 2026, viewMonth = 4;
   let selected = {year:2026, month:4, day:29};
   let activeWho = 'a';
+  const MIN_YEAR=2020,MAX_YEAR=2035;
+  let calendarImporting=false;
+  let calendarNoteResolver=null;
+  const noteDialog=document.getElementById('calendar-note-dialog');
+  function requestCalendarNote(title,value=''){
+    if(calendarNoteResolver) return Promise.resolve(null);
+    document.getElementById('calendar-note-title').textContent=title;
+    document.getElementById('calendar-note-input').value=value;
+    return new Promise(resolve=>{calendarNoteResolver=resolve;noteDialog.showModal();document.getElementById('calendar-note-input').focus();});
+  }
+  function finishCalendarNote(value){
+    const resolve=calendarNoteResolver;calendarNoteResolver=null;noteDialog.close();if(resolve) resolve(value);
+  }
+  document.getElementById('calendar-note-form').addEventListener('submit',e=>{e.preventDefault();finishCalendarNote(document.getElementById('calendar-note-input').value);});
+  document.getElementById('calendar-note-cancel').addEventListener('click',()=>finishCalendarNote(null));
+  noteDialog.addEventListener('close',()=>{const resolve=calendarNoteResolver;calendarNoteResolver=null;if(resolve) resolve(null);});
 
   // ===== HELPERS =====
   function selKey() {
@@ -533,9 +567,14 @@
     const now = new Date();
 
     document.getElementById('cal-month').innerHTML =
-      `${MONTHS_ZH[viewMonth]} <span class=”en”>${MONTHS_EN[viewMonth]}</span>`;
+      `${MONTHS_ZH[viewMonth]} <span class="en">${MONTHS_EN[viewMonth]}</span>`;
     document.getElementById('cal-sub').textContent =
-      'ROLL 2026-2027 · ' + countMonth(viewYear, viewMonth) + ' 天';
+      `ROLL ${MIN_YEAR}–${MAX_YEAR} · ` + countMonth(viewYear, viewMonth) + ' 天';
+    document.getElementById('calendar-year').value=viewYear;
+    document.getElementById('calendar-month').value=viewMonth;
+    document.getElementById('prev').disabled=viewYear===MIN_YEAR&&viewMonth===0;
+    document.getElementById('next').disabled=viewYear===MAX_YEAR&&viewMonth===11;
+    if(selected) document.getElementById('now').textContent=`${selected.year}.${String(selected.month+1).padStart(2,'0')}.${String(selected.day).padStart(2,'0')}`;
     const yrEl = document.querySelector('.cal-head .yr');
     if (yrEl) yrEl.textContent = `ROLL · ${viewYear}`;
 
@@ -562,37 +601,47 @@
     if (sd) sd.textContent = countMonth(viewYear, viewMonth);
   }
 
-  document.getElementById('prev').addEventListener('click', () => {
-    if (viewYear===2026 && viewMonth===0) return;
-    viewMonth--; if (viewMonth<0) { viewMonth=11; viewYear--; }
-    renderCalendar(); renderLanes();
-  });
-  document.getElementById('next').addEventListener('click', () => {
-    if (viewYear===2027 && viewMonth===11) return; // max: Dec 2027
-    viewMonth++; if (viewMonth>11) { viewMonth=0; viewYear++; }
-    renderCalendar(); renderLanes();
+  function goToMonth(year,month,day=selected?.day||1){
+    const date=new Date(year,month,1);
+    if(date.getFullYear()<MIN_YEAR||date.getFullYear()>MAX_YEAR) return;
+    viewYear=date.getFullYear();viewMonth=date.getMonth();
+    selected={year:viewYear,month:viewMonth,day:Math.min(day,daysInMonth(viewYear,viewMonth))};
+    renderCalendar();renderLanes();
+  }
+  document.getElementById('prev').addEventListener('click',()=>goToMonth(viewYear,viewMonth-1));
+  document.getElementById('next').addEventListener('click',()=>goToMonth(viewYear,viewMonth+1));
+  document.getElementById('calendar-year').addEventListener('change',e=>goToMonth(Number(e.target.value),viewMonth));
+  document.getElementById('calendar-month').addEventListener('change',e=>goToMonth(viewYear,Number(e.target.value)));
+  document.getElementById('calendar-today').addEventListener('click',()=>{
+    const today=new Date();goToMonth(today.getFullYear(),today.getMonth(),today.getDate());
   });
 
   // ===== UPLOAD =====
-  function handleUpload(who, files) {
+  async function handleUpload(who, files) {
+    if(calendarImporting||!calendarStorage.ready) return;
     if (!selected) { showToast('请先从日历选择一天'); return; }
     const arr = Array.from(files).filter(f=>f.type.startsWith('image/'));
     if (!arr.length) return;
-    arr.forEach(file => {
-      const note = (prompt(`${PEOPLE[who].name}：为这张照片写一句记事`, '') ?? '').trim();
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const key = selKey();
+    const targetKey=selKey();
+    calendarImporting=true;
+    try {
+      for(const file of arr){
+        const note=await requestCalendarNote(`${PEOPLE[who].name}：为这张照片写一句记事`);
+        if(note===null) continue;
+        const src=await new Promise((resolve,reject)=>{
+          const reader=new FileReader();reader.onload=e=>resolve(e.target.result);reader.onerror=()=>reject(new Error('无法读取 '+file.name));reader.onabort=()=>reject(new Error('导入已取消'));reader.readAsDataURL(file);
+        });
+        const key = targetKey;
         if (!state[key]) state[key] = { a:{cur:0,shots:[],mood:null}, b:{cur:0,shots:[],mood:null} };
         const s = state[key][who];
-        s.shots.push({ tint:Math.floor(Math.random()*4), note, src:ev.target.result });
+        s.shots.push({ tint:Math.floor(Math.random()*4), note, src });
         s.cur = s.shots.length - 1;
         RECORDED.add(key);
         renderCalendar(); renderLanes();
         showToast(`✓ ${PEOPLE[who].name} 新增一帧`);
-      };
-      reader.readAsDataURL(file);
-    });
+      }
+    }catch(error){alert('照片导入失败：'+error.message);}
+    finally {calendarImporting=false;}
   }
 
   ['a','b'].forEach(who => {
@@ -602,6 +651,7 @@
 
   // ===== LANES =====
   function renderLanes() {
+    persistCalendar();
     const lanesEl = document.getElementById('lanes');
     if (!lanesEl) return;
     if (!selected) {
@@ -684,7 +734,7 @@
       var av = document.createElement('span');
       av.className = 'pt-avatar';
       var stroke = w==='a' ? '#e6a92b' : '#c4523c';
-      av.innerHTML = '<svg viewBox=”0 0 48 48” fill=”none” stroke=”'+stroke+'” stroke-width=”2.4”><circle cx=”24” cy=”17” r=”9”/><path d=”M9 44 C 9 32, 17 27, 24 27 C 31 27, 39 32, 39 44”/></svg>';
+      av.innerHTML = '<svg viewBox="0 0 48 48" fill="none" stroke="'+stroke+'" stroke-width="2.4"><circle cx="24" cy="17" r="9"/><path d="M9 44 C 9 32, 17 27, 24 27 C 31 27, 39 32, 39 44"/></svg>';
       var ptxt = document.createElement('span');
       ptxt.className = 'pt-text';
       var pname = document.createElement('span');
@@ -787,6 +837,17 @@
       noteSpan.className = 'txt';
       noteSpan.textContent = cur.note || '（没有记事）';
       fvNote.appendChild(qSpan); fvNote.appendChild(noteSpan);
+      var editNote=document.createElement('button');
+      editNote.className='back-btn';editNote.textContent='✎ 编辑记事';
+      editNote.style.cssText='background:transparent;cursor:pointer;margin-left:8px';
+      editNote.addEventListener('click',async function(){
+        var text=await requestCalendarNote('编辑这张照片的记事',cur.note||'');
+        if(text===null) return;
+        cur.note=text;
+        renderLanes();
+        if(!calendarStorage.failed) showToast('✓ 记事已保存');
+      });
+      fvNote.appendChild(editNote);
       fv.appendChild(fvNote);
       filmWin.appendChild(fv);
     }
@@ -920,9 +981,32 @@
   const toast=document.getElementById('toast');
   const toastMsg=document.getElementById('toast-msg');
   let tt;
-  function showToast(m){toastMsg.textContent=m;toast.hidden=false;clearTimeout(tt);tt=setTimeout(()=>toast.hidden=true,1900);}
+  function showToast(m){if(calendarStorage.failed) m='保存失败 · 请点击保存记事重试';toastMsg.textContent=m;toast.hidden=false;clearTimeout(tt);tt=setTimeout(()=>toast.hidden=true,1900);}
 
   // ===== INIT =====
+  const calendarStorage=new TextPageStorage('calendar');
+  function persistCalendar(manual=false){
+    return !!calendarStorage.save({version:1,state,viewYear,viewMonth,selected},manual);
+  }
+  const calendarSaved=calendarStorage.load();
+  if(calendarSaved){
+    state=calendarSaved.state;
+    viewYear=calendarSaved.viewYear;viewMonth=calendarSaved.viewMonth;selected=calendarSaved.selected;
+    RECORDED.clear();
+    Object.keys(state).forEach(key=>{if(state[key].a.shots.length||state[key].b.shots.length) RECORDED.add(key);});
+  }
+  if(!Number.isInteger(viewYear)||viewYear<MIN_YEAR||viewYear>MAX_YEAR||!Number.isInteger(viewMonth)||viewMonth<0||viewMonth>11){
+    viewYear=2026;viewMonth=4;selected={year:2026,month:4,day:29};
+  }
+  for(let year=MIN_YEAR;year<=MAX_YEAR;year++) document.getElementById('calendar-year').add(new Option(year+' 年',year));
+  MONTHS_ZH.forEach((name,index)=>document.getElementById('calendar-month').add(new Option(name,index)));
+  const saveCalendarButton=document.createElement('button');
+  saveCalendarButton.className='back-btn';saveCalendarButton.textContent='✓ 保存记事';
+  saveCalendarButton.style.cssText='background:transparent;cursor:pointer';
+  saveCalendarButton.addEventListener('click',()=>{if(persistCalendar(true)) showToast('✓ 记事已保存');});
+  calendarStorage.status.parentNode.appendChild(saveCalendarButton);
+  saveCalendarButton.disabled=!calendarStorage.ready;
+  window.addEventListener('beforeunload',e=>{if(calendarStorage.failed||calendarImporting){e.preventDefault();e.returnValue='照片导入或记事保存尚未完成';}});
   try {
     renderCalendar();
     renderLanes();

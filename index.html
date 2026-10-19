@@ -367,6 +367,15 @@
     max-width:1280px;margin:0 auto;
   }
   .footline .lbl{color:var(--kodak-deep)}
+  #library-settings{position:fixed;inset:0;margin:auto;width:min(650px,90vw);max-height:85vh;overflow:auto;padding:28px;background:#15110c;color:var(--cream);border:1px solid var(--kodak-deep);font-family:var(--serif)}
+  #library-settings::backdrop{background:rgba(0,0,0,.78)}
+  #library-settings h2{font-size:24px;margin:0 0 12px}
+  #library-settings p{line-height:1.8;font-size:14px}
+  #library-settings .library-path{padding:14px;border:1px solid #48351b;background:#0c0a07;overflow-wrap:anywhere;font-family:var(--mono);font-size:12px;user-select:text}
+  #library-settings button,#library-settings-button{cursor:pointer;background:transparent;border:1px solid #775c2b;color:var(--kodak);padding:8px 12px;font-family:var(--mono);font-size:12px}
+  #library-settings button:disabled{opacity:.4;cursor:wait}
+  #library-settings .library-actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+  #library-status{min-height:2em;color:var(--kodak);white-space:pre-wrap;overflow-wrap:anywhere}
 
 </style>
 </head>
@@ -383,7 +392,7 @@
       <div class="meta">
         <span>ROOM TEMP · 20°C</span>
         <span class="rec"><i></i>SAFE LIGHT ON</span>
-        <span class="stamp">DEVELOPED</span>
+        <button id="library-settings-button" class="stamp" type="button">照片库位置</button>
       </div>
     </header>
 
@@ -460,7 +469,7 @@
       <!-- 3 · Couple (Open) -->
       <article class="card" data-i="03" onclick="location.href='couple.html'">
         <span class="num">N° 03</span>
-        <span class="kind">▸ SHARED / FOR TWO</span>
+        <span class="kind">▸ LOCAL / FOR TWO</span>
         <h2>情侣相册<span class="en">Two-Roll Diary · 两个人的同一卷</span></h2>
 
         <div class="icbox">
@@ -483,7 +492,7 @@
           </div>
         </div>
 
-        <p class="desc">为同一段路上的两个人保留一卷胶片，三种玩法正在装载。</p>
+        <p class="desc">在同一台设备上，为两个人分别记录照片、心情和想说的话。</p>
 
         <div class="foot">
           <span>装上胶卷</span>
@@ -518,11 +527,26 @@
     </div>
 
     <div class="footline">
-      <span>DARKROOM · v2.4 · KODAK VINTAGE EDITION</span>
+      <span>DARKROOM · v2.0 · KODAK VINTAGE EDITION</span>
       <span><span class="lbl">EST</span> · 2026 · MADE WITH SILVER HALIDE</span>
       <span>SAFELIGHT 15W</span>
     </div>
 
   </div>
+  <dialog id="library-settings" aria-labelledby="library-settings-title">
+    <h2 id="library-settings-title">本地照片库</h2>
+    <p>照片、灵感随笔与两个人的记录，都保存在这台设备上的照片库里。</p>
+    <p>当前保存位置</p>
+    <div id="library-directory" class="library-path"></div>
+    <div class="library-actions">
+      <button id="library-migrate" type="button">更改保存位置</button>
+      <button id="library-open" type="button">打开已有照片库</button>
+      <button id="library-reveal" type="button">在文件夹中查看</button>
+    </div>
+    <p>更改位置会在所选位置新建“DARKROOM照片库”，复制并校验所有照片与记录，完成后保留原文件夹。打开已有照片库会显示该库的内容。</p>
+    <p id="library-status" role="status" aria-live="polite"></p>
+    <button id="library-close" type="button">完成</button>
+  </dialog>
+  <script src="library-settings.js"></script>
 </body>
 </html>

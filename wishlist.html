@@ -283,25 +283,28 @@
 
 <div class="toast" id="toast" hidden><span class="dot"></span><span id="toast-msg">已保存</span></div>
 
+<script src="text-storage.js"></script>
+<script src="people-storage.js"></script>
 <script>
   var PEOPLE = {
-    a: {name: localStorage.getItem('darkroom.nick.a') || '阿野'},
-    b: {name: localStorage.getItem('darkroom.nick.b') || '林'}
+    a: {name: window.darkroomPeople.a},
+    b: {name: window.darkroomPeople.b}
   };
   var mnEl = document.getElementById('meter-names');
   if (mnEl) mnEl.textContent = PEOPLE.a.name + ' ✕ ' + PEOPLE.b.name;
 
   var TINTS = ['t1','t2','t3','t4'];
+  var nextRollId = 1;
   var rolls = [
     mkRoll('旅行', 36, 12, ['想去的海','一起看的日出','机场的拥抱']),
     mkRoll('约会', 24, 16, ['第一次牵手','电影院','雨里的伞']),
     mkRoll('深夜食堂', 36, 4, ['路边摊','便利店关东煮']),
     mkRoll('未来的家', 48, 9, ['看房的下午','第一盆植物']),
   ];
-  var nextRollId = 5;
   var curRoll = null;
   var selFrame = -1;
   var activeWho = 'a';
+  var wishlistImporting = 0;
 
   function mkRoll(name, total, doneCount, notes) {
     var frames = [];
@@ -329,6 +332,7 @@
 
   // ===== LIST =====
   function renderList() {
+    persistWishlist();
     var wrap = document.getElementById('roll-list');
     wrap.innerHTML = '';
     rolls.forEach(function(r) {
@@ -463,6 +467,7 @@
 
   // ===== FILMSTRIP (left) =====
   function renderStrip() {
+    persistWishlist();
     var strip = document.getElementById('film-strip');
     strip.innerHTML = '';
     curRoll.frames.forEach(function(f, i) {
@@ -496,7 +501,7 @@
             e.stopPropagation();
             if (!confirm('删除这张心愿照片？')) return;
             var fr = curRoll.frames[frameIdx];
-            fr.filled = false; fr.src = null; fr.title = null;
+            fr.filled = false; fr.src = null; fr.title = null; delete fr.photoFile;
             fr.letters = {a:'', b:''}; fr.opened = {a:false, b:false};
             if (selFrame === frameIdx) selFrame = -1;
             renderDetail();
@@ -519,18 +524,7 @@
           finput.addEventListener('change', function(e) {
             var file = e.target.files[0];
             if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function(ev) {
-              var frame = curRoll.frames[frameIdx];
-              frame.filled = true;
-              frame.src = ev.target.result;
-              frame.tint = Math.floor(Math.random()*4);
-              frame.title = file.name.replace(/\.[^.]+$/, '') || '一帧心愿';
-              renderDetail();
-              selectFrame(frameIdx);
-              showToast('✓ 心愿照片已上传');
-            };
-            reader.readAsDataURL(file);
+            importWishPhoto(curRoll,frameIdx,file);
             e.target.value = '';
           });
         })(i);
@@ -550,20 +544,33 @@
       if (!curRoll.frames[j].filled) { emptyIdx = j; break; }
     }
     if (emptyIdx < 0) { showToast('这卷已经拍满了'); e.target.value = ''; return; }
-    var reader = new FileReader();
-    reader.onload = function(ev) {
-      var frame = curRoll.frames[emptyIdx];
-      frame.filled = true;
-      frame.src = ev.target.result;
-      frame.tint = Math.floor(Math.random()*4);
-      frame.title = file.name.replace(/\.[^.]+$/, '') || '一帧心愿';
-      renderDetail();
-      selectFrame(emptyIdx);
-      showToast('✓ 心愿照片已上传');
-    };
-    reader.readAsDataURL(file);
+    importWishPhoto(curRoll,emptyIdx,file);
     e.target.value = '';
   });
+
+  function importWishPhoto(targetRoll,frameIdx,file){
+    if(!wishlistStorage.ready||wishlistImporting) return;
+    if(!file.type.startsWith('image/')){showToast('请选择图片文件');return;}
+    var targetFrame=targetRoll.frames[frameIdx];
+    if(!targetFrame||targetFrame.filled) return;
+    wishlistImporting++;
+    showToast('正在导入，请等待保存完成');
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        if(!rolls.includes(targetRoll)||targetRoll.frames[frameIdx]!==targetFrame||targetFrame.filled) throw new Error('目标位置已改变，请重新导入');
+        targetFrame.filled=true;targetFrame.src=ev.target.result;delete targetFrame.photoFile;
+        targetFrame.tint=Math.floor(Math.random()*4);targetFrame.title=file.name.replace(/\.[^.]+$/,'')||'一帧心愿';
+        if(persistWishlist(true)){
+          if(curRoll===targetRoll){renderDetail();selectFrame(frameIdx);}
+          showToast('✓ 心愿照片已保存到「'+targetRoll.name+'」');
+        }
+      }catch(error){showToast('导入未完成：'+error.message);}
+      finally{wishlistImporting--;}
+    };
+    reader.onerror=reader.onabort=function(){wishlistImporting--;showToast('照片读取失败，请重试；原文件未改变');};
+    try{reader.readAsDataURL(file);}catch(error){wishlistImporting--;showToast('无法读取照片：'+error.message);}
+  }
 
   // ===== LARGE VIEW (right top) =====
   function renderLargeView() {
@@ -713,15 +720,18 @@
       ta.id = 'letter-text';
       ta.placeholder = '还没有留下文字…';
       ta.value = f.letters[who];
-      ta.addEventListener('input', function() { f.letters[who] = ta.value; });
+      ta.addEventListener('input', function() { f.letters[who] = ta.value; persistWishlist(); refreshTabs(); });
       var ops = document.createElement('div');
       ops.className = 'ops';
-      var tip = document.createElement('span'); tip.className = 'tip'; tip.textContent = '手写体 · 内容自动保存';
+      var tip = document.createElement('span'); tip.className = 'tip'; tip.textContent = '输入后自动保存';
+      var saveBtn=document.createElement('button');
+      saveBtn.className='btn-close';saveBtn.textContent='✓ 保存';saveBtn.id='save-letter';
+      saveBtn.addEventListener('click',function(){if(persistWishlist(true)) showToast('✓ 信笺已保存');});
       var closeBtn = document.createElement('button');
       closeBtn.className = 'btn-close';
       closeBtn.textContent = '▲ 合上';
       closeBtn.addEventListener('click', tearClose);
-      ops.appendChild(tip); ops.appendChild(closeBtn);
+      ops.appendChild(tip); ops.appendChild(saveBtn); ops.appendChild(closeBtn);
       opened.appendChild(from); opened.appendChild(ta); opened.appendChild(ops);
       stage.appendChild(opened);
     }
@@ -792,12 +802,24 @@
   var toast = document.getElementById('toast');
   var toastMsg = document.getElementById('toast-msg');
   var tt;
-  function showToast(m) { toastMsg.textContent=m; toast.hidden=false; clearTimeout(tt); tt=setTimeout(function(){toast.hidden=true;},1900); }
+  function showToast(m) { if(wishlistStorage?.failed) m='保存失败 · 输入仍在页面，请点击保存重试'; toastMsg.textContent=m; toast.hidden=false; clearTimeout(tt); tt=setTimeout(function(){toast.hidden=true;},1900); }
 
   // seed demo letter
   rolls[0].frames[0].letters.a = '说好了，明年春天一定要去看一次真正的海。\n你说你想在沙滩上写我们的名字，等浪来把它带走。';
   rolls[0].frames[0].letters.b = '我偷偷把机票钱存好了，别告诉你。\n到时候让你负责拍照就行。';
 
+  var wishlistStorage=new TextPageStorage('wishlist');
+  function persistWishlist(manual){
+    if(!wishlistStorage) return false;
+    return !!wishlistStorage.save({version:1,rolls:rolls,nextRollId:nextRollId},!!manual);
+  }
+  var wishlistSaved=wishlistStorage.load();
+  if(wishlistSaved){rolls=wishlistSaved.rolls;nextRollId=wishlistSaved.nextRollId;}
+  rolls.forEach(function(r){r.frames.forEach(function(f){f.opened={a:false,b:false};});});
+  window.addEventListener('beforeunload',function(e){
+    if(wishlistStorage.failed||wishlistImporting){e.preventDefault();e.returnValue='照片导入或信笺保存尚未完成，请稍候';}
+  });
+  document.addEventListener('click',function(e){if(wishlistImporting&&e.target.closest('a')){e.preventDefault();showToast('请等待照片导入完成');}},true);
   renderList();
 </script>
 </body>

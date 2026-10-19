@@ -230,6 +230,14 @@
     display:none;z-index:3;letter-spacing:.1em;
   }
   .ach:hover .ach-del{display:block}
+  .ach{cursor:pointer}
+  .ach.selected{border-color:var(--kodak);box-shadow:0 0 0 1px var(--kodak)}
+  .journal-dialog{position:fixed;inset:0;margin:auto;width:min(500px,90vw);max-height:85vh;overflow:auto;background:var(--ink-1);color:var(--cream);border:1px solid var(--kodak);padding:26px;font-family:var(--serif)}
+  .journal-dialog::backdrop{background:rgba(0,0,0,.75)}
+  .journal-dialog h2{margin-bottom:18px}
+  .journal-dialog label{display:block;margin:14px 0;font-size:14px}
+  .journal-dialog input,.journal-dialog textarea{display:block;width:100%;padding:10px;margin-top:8px;background:var(--ink-0);color:var(--cream);border:1px solid var(--cream-fade);font:inherit}
+  .journal-dialog button{padding:8px 16px;background:var(--ink-2);border:1px solid var(--kodak-deep);color:var(--kodak);cursor:pointer}
   .ach .ach-del:hover{background:var(--red);color:#1a0a06;border-color:var(--red)}
 
   .dropzone{
@@ -340,8 +348,8 @@
         </div>
       </div>
       <div class="meter">
-        <span><span class="dot"></span>5 ACTIVE</span>
-        <span>本月 23 / 36</span>
+        <span><span class="dot"></span>FIELD NOTES</span>
+        <span>看见 · 收录 · 随想</span>
       </div>
     </div>
 
@@ -376,8 +384,8 @@
             </h1>
           </div>
           <div class="progress-large">
-            <div class="big"><span id="d-cur">14</span><em> / </em><span id="d-tgt">36</span></div>
-            <div class="lbl">FRAMES ACHIEVED</div>
+            <div class="big"><span id="d-cur">5</span></div>
+            <div class="lbl">已收录作品</div>
           </div>
         </div>
 
@@ -391,15 +399,15 @@
           <div class="params">
             <span>截止 <b id="d-due">2026.06.30</b></span>
             <span>状态 <b id="d-stat" style="color:var(--kodak)">IN PROGRESS</b></span>
-            <span>建议时段 <b>05:30 — 07:00</b></span>
-            <span>胶卷绑定 <b>城市夜行</b></span>
+            <span>建议时段 <b id="d-window">05:30 — 07:00</b></span>
+            <span>胶卷绑定 <b id="d-roll">城市夜行</b></span>
           </div>
         </section>
 
         <div>
           <div class="ach-head" style="margin-bottom:14px">
-            <h3>● 已达成的帧 / ACHIEVED FRAMES</h3>
-            <span class="count"><span id="ach-count">5</span> / <span id="ach-tgt">36</span></span>
+            <h3>● 收录作品 / COLLECTED FRAMES</h3>
+            <span class="count">已收录 <span id="ach-count">5</span> 张</span>
           </div>
           <div class="ach-grid" id="ach-grid">
             <div class="ach"><div class="ph"></div><button class="ach-del">✕</button><div class="num">F01 · 04.03</div><span class="check">✓ DONE</span><div class="lbl"><span>建国门桥</span><span>05:42</span></div></div>
@@ -411,7 +419,7 @@
             <div class="dropzone" id="drop" style="position:relative;overflow:hidden">
               <span class="plus" style="pointer-events:none">＋</span>
               <span style="pointer-events:none">拖入照片 · 或点击上传</span>
-              <span class="hint" style="pointer-events:none">图片将显示在达成帧中</span>
+              <span class="hint" style="pointer-events:none">自己的作品 · 欣赏的照片</span>
               <input type="file" id="drop-file" accept="image/*" multiple
                 style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2">
             </div>
@@ -424,14 +432,15 @@
         <div class="nb-head">
           <h3>● 灵感本</h3>
           <div style="display:flex;align-items:center;gap:8px">
-            <span class="stamp">FIELD NOTES</span>
             <button id="btn-edit-notes" style="border:1px solid #e6a92b;background:transparent;color:#e6a92b;padding:5px 14px;font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.18em;cursor:pointer">✎ 编辑</button>
+            <button id="btn-done-notes" style="border:1px solid #e6a92b;background:#e6a92b;color:#0a0805;padding:5px 14px;font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.18em;cursor:pointer">✓ 保存</button>
           </div>
         </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--cream-fade);margin:0 0 10px">输入后自动保存 · <span id="notes-save-status" role="status">已保存</span></div>
 
         <div class="paper">
-          <div class="date">— 周日，5月24日，雨后 —</div>
-          <textarea class="note-area" id="notes" placeholder="今天想到的、看到的、下次想拍的……" readonly>下次去一趟首钢园，老旧的工业管道，配清晨的薄雾应该很有味道。
+          <div class="date" id="note-photo-label">— 选择一张照片 —</div>
+          <textarea class="note-area" id="notes" placeholder="写下观看这张照片的感想、喜欢的细节……" readonly>下次去一趟首钢园，老旧的工业管道，配清晨的薄雾应该很有味道。
 
 构图试试三分法的反面 —— 把人物压到画面最底端，把整面墙给天空。
 
@@ -444,8 +453,8 @@ f/8 是稳的，但 f/2 在晨雾里更像梦。
         <div class="nb-foot">
           <span><span id="word-count">0</span> 字 · 自动保存</span>
           <div style="display:flex;gap:8px">
-            <button id="btn-done-notes" style="display:none;border:1px solid #e6a92b;background:#e6a92b;color:#0a0805;padding:5px 14px;font-family:'Courier Prime',monospace;font-size:11px;letter-spacing:.18em;cursor:pointer">✓ 完成</button>
-            <button class="btn" id="clear-notes">＋ 新一页</button>
+            <button class="btn" id="legacy-notes">旧版随笔</button>
+            <button class="btn" id="clear-notes">清空感想</button>
           </div>
         </div>
       </aside>
@@ -454,10 +463,29 @@ f/8 是稳的，但 f/2 在晨雾里更像梦。
   </div>
 
   <div class="toast" id="toast" hidden><span class="dot"></span><span id="toast-msg">已保存</span></div>
+  <dialog class="journal-dialog" id="new-goal-dialog" aria-labelledby="new-goal-title">
+    <form id="new-goal-form">
+      <h2 id="new-goal-title">新建任务胶卷</h2>
+      <p>收录自己的作品，或收藏欣赏时遇到的照片。</p>
+      <label>胶卷名称<input id="new-goal-name" required maxlength="120" autofocus placeholder="例如：光影收藏、旅行里的片刻"></label>
+      <label>拍摄或收藏构想（选填）<textarea id="new-goal-desc" rows="3" placeholder="这卷照片里，想记录或留意什么？"></textarea></label>
+      <div id="new-goal-error" role="status"></div>
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:18px">
+        <button type="button" id="cancel-new-goal">取消</button><button type="submit">创建胶卷</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="journal-dialog" id="legacy-notes-dialog" aria-labelledby="legacy-notes-title">
+    <h2 id="legacy-notes-title">旧版随笔</h2>
+    <p>这些文字来自升级前的共用灵感本，已完整保留，可复制到对应照片的感想中。</p>
+    <textarea id="legacy-notes-text" readonly rows="12" aria-label="升级前的随笔内容"></textarea>
+    <button id="close-legacy-notes" type="button">关闭</button>
+  </dialog>
 
+<script src="text-storage.js"></script>
 <script>
   // ====== DATA ======
-  const goals = [
+  let goals = [
     { id:1, name:'城市边缘的清晨', en:'Urban Mornings · 36 Frames Project',
       meta:'始于 2026.04.01', due:'2026.06.30', cur:14, tgt:36, status:'in-progress',
       desc:'在城市还没有完全醒来的时刻，捕捉光线擦过墙面、空荡的街道、还没营业的小店、洒水车的雾、晨跑者拉长的影子。一卷三十六张，每一张都来自不同的早晨，希望最后能拼成这座城市的私人晨曲。',
@@ -482,280 +510,7 @@ f/8 是稳的，但 f/2 在晨雾里更像梦。
       desc:'本来想拍一卷雨夜里的招牌灯光，后来天没怎么下雨，没做完。留着想起的时候继续。',
       window:'雨天 21:00 后', roll:'城市夜行' },
   ];
-  let nextGoalId = 6;
-  let activeGoal = goals[0];
-  let activeFilter = 'all';
-
-  // ====== RENDER GOALS ======
-  const goalsEl = document.getElementById('goals');
-  const goalCountEl = document.getElementById('goal-count');
-
-  const STATUS_LABEL = { 'in-progress':'IN PROGRESS', 'done':'DONE', 'archived':'ARCHIVED' };
-  const STATUS_ZH    = { 'in-progress':'进行中',     'done':'已完成', 'archived':'已归档' };
-
-  function renderGoals(){
-    goalsEl.innerHTML = '';
-    const visible = goals.filter(g => activeFilter === 'all' || g.status === activeFilter);
-    goalCountEl.textContent = `${visible.length} 卷`;
-    visible.forEach(g => {
-      const pct = Math.min(100, Math.round(g.cur / g.tgt * 100));
-      const el = document.createElement('div');
-      el.className = 'goal' + (g.id === activeGoal?.id ? ' active' : '');
-      el.dataset.status = g.status;
-      el.innerHTML = `
-        <div class="row1">
-          <span class="badge">${STATUS_LABEL[g.status]}</span>
-          <button class="del" title="删除">×</button>
-        </div>
-        <h4>${escapeHtml(g.name)}</h4>
-        <div class="sub">${escapeHtml(g.en || '')}</div>
-        <div class="prog"><i style="width:${pct}%"></i></div>
-        <div class="pr-row">
-          <span><b>${g.cur}</b> / ${g.tgt} 帧</span>
-          <span>${pct}%</span>
-        </div>
-      `;
-      el.addEventListener('click', e => {
-        if (e.target.classList.contains('del')) return;
-        activeGoal = g;
-        renderGoals();
-        renderDetail();
-      });
-      el.querySelector('.del').addEventListener('click', e => {
-        e.stopPropagation();
-        if (!confirm(`删除任务「${g.name}」？`)) return;
-        const i = goals.findIndex(x => x.id === g.id);
-        goals.splice(i, 1);
-        if (activeGoal?.id === g.id) activeGoal = goals[0] || null;
-        renderGoals();
-        renderDetail();
-        showToast('✓ 已删除任务');
-      });
-      goalsEl.appendChild(el);
-    });
-  }
-
-  // ====== RENDER DETAIL ======
-  function renderDetail(){
-    const main = document.getElementById('main');
-    if (!activeGoal) { main.style.opacity = .35; return; }
-    main.style.opacity = 1;
-    document.getElementById('d-title').firstChild.nodeValue = activeGoal.name + ' ';
-    document.getElementById('d-en').textContent = activeGoal.en || '';
-    document.getElementById('d-meta').textContent =
-      `N° ${String(activeGoal.id).padStart(2,'0')} · ${STATUS_ZH[activeGoal.status]} · ${activeGoal.meta}`;
-    document.getElementById('d-cur').textContent = activeGoal.cur;
-    document.getElementById('d-tgt').textContent = activeGoal.tgt;
-    document.getElementById('d-desc').textContent = activeGoal.desc;
-    document.getElementById('d-due').textContent = activeGoal.due;
-    const stat = document.getElementById('d-stat');
-    stat.textContent = STATUS_LABEL[activeGoal.status];
-    stat.style.color = activeGoal.status === 'done' ? 'var(--green)' :
-                       activeGoal.status === 'archived' ? 'var(--cream-fade)' : 'var(--kodak)';
-    document.getElementById('ach-count').textContent = activeGoal.cur;
-    document.getElementById('ach-tgt').textContent = activeGoal.tgt;
-  }
-
-  // ====== FILTERS ======
-  document.querySelectorAll('.filter').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.filter').forEach(x => x.classList.remove('on'));
-      b.classList.add('on');
-      activeFilter = b.dataset.f;
-      renderGoals();
-    });
-  });
-
-  // ====== NEW GOAL ======
-  document.getElementById('new-goal').addEventListener('click', () => {
-    const name = prompt('新任务的名字：', '新拍摄计划');
-    if (!name) return;
-    const tgtStr = prompt('目标张数（默认 36）：', '36');
-    const tgt = parseInt(tgtStr) || 36;
-    const g = {
-      id: nextGoalId++, name: name.trim(), en: '',
-      meta: '始于 ' + new Date().toISOString().slice(0,10).replace(/-/g,'.'),
-      due: '未定', cur: 0, tgt, status: 'in-progress',
-      desc: '点击此处补充拍摄构想……',
-      window: '—', roll: '—',
-    };
-    goals.unshift(g);
-    activeGoal = g;
-    renderGoals();
-    renderDetail();
-    showToast('✓ 已建立新任务');
-  });
-
-  // ====== DROPZONE — real file upload ======
-  const drop = document.getElementById('drop');
-  const dropFile = document.getElementById('drop-file');
-  const achGrid = document.getElementById('ach-grid');
-
-  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
-
-  drop.addEventListener('drop', e => {
-    e.preventDefault();
-    drop.classList.remove('over');
-    handleDropFiles(e.dataTransfer.files);
-  });
-  dropFile.addEventListener('change', e => {
-    handleDropFiles(e.target.files);
-    e.target.value = '';
-  });
-
-  function handleDropFiles(files) {
-    if (!activeGoal) return;
-    const arr = Array.from(files).filter(f => f.type.startsWith('image/'));
-    if (!arr.length) { showToast('请上传图片文件'); return; }
-    let loaded = 0;
-    arr.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        addAchFrame(ev.target.result, file.name.replace(/\.[^.]+$/, ''));
-        loaded++;
-        if (loaded === arr.length) {
-          activeGoal.cur = Math.min(activeGoal.tgt, activeGoal.cur + arr.length);
-          if (activeGoal.cur >= activeGoal.tgt) activeGoal.status = 'done';
-          renderGoals(); renderDetail();
-          showToast(`✓ 已上传 ${arr.length} 张照片`);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function addAchFrame(src, label) {
-    const div = document.createElement('div');
-    div.className = 'ach';
-    div.style.cssText = 'position:relative;aspect-ratio:3/2;border:1px solid #2c2316;overflow:hidden;background:#1a140c;';
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
-    img.alt = '';
-    const delBtn = document.createElement('button');
-    delBtn.className = 'ach-del';
-    delBtn.textContent = '✕';
-    const check = document.createElement('span');
-    check.className = 'check';
-    check.textContent = '✓ DONE';
-    const lbl = document.createElement('div');
-    lbl.className = 'lbl';
-    lbl.innerHTML = `<span>${escapeHtml(label)}</span>`;
-    div.appendChild(img);
-    div.appendChild(delBtn);
-    div.appendChild(check);
-    div.appendChild(lbl);
-    achGrid.insertBefore(div, drop);
-  }
-
-  // Delete handler — event delegation on the whole grid
-  achGrid.addEventListener('click', e => {
-    const btn = e.target.closest('.ach-del');
-    if (!btn) return;
-    const frame = btn.closest('.ach');
-    if (!frame) return;
-    if (!confirm('删除这张照片？')) return;
-    frame.remove();
-    if (activeGoal) {
-      activeGoal.cur = Math.max(0, activeGoal.cur - 1);
-      if (activeGoal.status === 'done' && activeGoal.cur < activeGoal.tgt) {
-        activeGoal.status = 'in-progress';
-      }
-      renderGoals();
-      renderDetail();
-    }
-    showToast('✓ 已删除');
-  });
-
-  // ====== EDIT BRIEF (拍摄构想) ======
-  const descP = document.getElementById('d-desc');
-  const descEdit = document.getElementById('d-desc-edit');
-  const btnEditDesc = document.getElementById('btn-edit-desc');
-
-  btnEditDesc.addEventListener('click', () => {
-    if (descEdit.style.display === 'none') {
-      descEdit.value = descP.textContent;
-      descEdit.style.display = 'block';
-      descP.style.display = 'none';
-      btnEditDesc.textContent = '✓ 保存构想';
-      descEdit.focus();
-    } else {
-      const val = descEdit.value.trim();
-      if (val && activeGoal) activeGoal.desc = val;
-      descP.textContent = val || descP.textContent;
-      descEdit.style.display = 'none';
-      descP.style.display = '';
-      btnEditDesc.textContent = '✎ 编辑构想';
-      showToast('✓ 构想已保存');
-    }
-  });
-
-  // ====== NOTES — edit mode toggle ======
-  const notes = document.getElementById('notes');
-  const wc = document.getElementById('word-count');
-  const btnEditNotes = document.getElementById('btn-edit-notes');
-  const btnDoneNotes = document.getElementById('btn-done-notes');
-
-  const updateWc = () => wc.textContent = notes.value.replace(/\s/g,'').length;
-
-  btnEditNotes.addEventListener('click', () => {
-    notes.removeAttribute('readonly');
-    notes.focus();
-    notes.setSelectionRange(notes.value.length, notes.value.length);
-    btnEditNotes.style.display = 'none';
-    btnDoneNotes.style.display = '';
-  });
-
-  btnDoneNotes.addEventListener('click', () => {
-    notes.setAttribute('readonly', '');
-    try { localStorage.setItem('darkroom_notes', notes.value); } catch(e) {}
-    btnDoneNotes.style.display = 'none';
-    btnEditNotes.style.display = '';
-    showToast('✓ 灵感本已保存');
-  });
-
-  notes.addEventListener('input', () => {
-    updateWc();
-    try { localStorage.setItem('darkroom_notes', notes.value); } catch(e) {}
-  });
-
-  try {
-    const saved = localStorage.getItem('darkroom_notes');
-    if (saved !== null) notes.value = saved;
-  } catch(e) {}
-  updateWc();
-
-  document.getElementById('clear-notes').addEventListener('click', () => {
-    if (!notes.value || confirm('开始新的一页？当前内容会清空。')) {
-      notes.removeAttribute('readonly');
-      notes.value = '';
-      updateWc();
-      try { localStorage.setItem('darkroom_notes', ''); } catch(e) {}
-      btnEditNotes.style.display = 'none';
-      btnDoneNotes.style.display = '';
-      notes.focus();
-    }
-  });
-
-  // ====== TOAST ======
-  const toast = document.getElementById('toast');
-  const toastMsg = document.getElementById('toast-msg');
-  let toastTimer;
-  function showToast(msg){
-    toastMsg.textContent = msg;
-    toast.hidden = false;
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.hidden = true, 2000);
-  }
-
-  function escapeHtml(s){
-    return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  // ====== INIT ======
-  renderGoals();
-  renderDetail();
 </script>
+<script src="journal-page.js"></script>
 </body>
 </html>

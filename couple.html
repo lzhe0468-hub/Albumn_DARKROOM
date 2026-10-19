@@ -472,7 +472,9 @@
             <span class="amp">&amp;</span>
             <span class="nick-name" id="nick-b" contenteditable="true" spellcheck="false">林</span>
           </div>
-          <div class="nick-hint">点击名字可编辑</div>
+          <div class="nick-hint">点击名字可编辑 · 输入后自动保存 <span id="nickname-status" role="status"></span>
+            <button id="save-nicknames" class="back-btn" style="background:transparent;cursor:pointer">✓ 保存昵称</button>
+          </div>
         </div>
       </section>
 
@@ -484,12 +486,14 @@
       </div>
     </div>
     <div class="footline">
-      <span>DARKROOM · v2.4 · COUPLE EDITION</span>
+      <span>DARKROOM · v2.0 · COUPLE EDITION</span>
       <span><span class="lbl">EST</span> · 2026 · MADE WITH SILVER HALIDE</span>
       <span>FOR TWO</span>
     </div>
   </div>
 
+<script src="text-storage.js"></script>
+<script src="people-storage.js"></script>
 <script>
   // ===== Three modes =====
   const modes = [
@@ -648,16 +652,31 @@
   const NICK_KEY = { a: 'darkroom.nick.a', b: 'darkroom.nick.b' };
 
   function loadNick(el, key, fallback) {
-    el.textContent = localStorage.getItem(key) || fallback;
+    el.textContent = window.darkroomPeople[key.endsWith('.a')?'a':'b'] || fallback;
   }
   function saveNick(el, key) {
-    const val = el.textContent.trim();
-    if (val) localStorage.setItem(key, val);
-    else el.textContent = localStorage.getItem(key) || el.textContent;
+    if(!el.textContent.trim()) el.textContent=window.darkroomPeople[key.endsWith('.a')?'a':'b'];
+    saveNicknames();
+  }
+  const nicknameStorage=new TextPageStorage('people',document.getElementById('nickname-status'));
+  nicknameStorage.ready=window.peopleStorageReady;
+  if(!nicknameStorage.ready){nickA.contentEditable='false';nickB.contentEditable='false';document.getElementById('save-nicknames').disabled=true;}
+  function saveNicknames(manual=false){
+    const data={version:1,a:nickA.textContent.trim()||window.darkroomPeople.a,b:nickB.textContent.trim()||window.darkroomPeople.b};
+    if(nicknameStorage.save(data,manual)){
+      window.darkroomPeople={a:data.a,b:data.b};
+      try {localStorage.setItem(NICK_KEY.a,data.a);localStorage.setItem(NICK_KEY.b,data.b);}catch{}
+      return true;
+    }
+    return false;
   }
 
   loadNick(nickA, NICK_KEY.a, '阿野');
   loadNick(nickB, NICK_KEY.b, '林');
+  if(nicknameStorage.ready) saveNicknames();
+  [nickA,nickB].forEach(el=>el.addEventListener('input',()=>saveNicknames()));
+  document.getElementById('save-nicknames').addEventListener('click',()=>saveNicknames(true));
+  window.addEventListener('beforeunload',e=>{if(nicknameStorage.failed){e.preventDefault();e.returnValue='昵称尚未保存';}});
 
   nickA.addEventListener('blur', () => saveNick(nickA, NICK_KEY.a));
   nickB.addEventListener('blur', () => saveNick(nickB, NICK_KEY.b));

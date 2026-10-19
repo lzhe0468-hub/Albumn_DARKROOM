@@ -404,7 +404,7 @@
         <div class="brand">
           <span class="logo">●</span>
           <em>Darkroom</em>
-          <small>相册展示器 · v2.4</small>
+          <small>相册展示器 · v2.0</small>
         </div>
       </div>
       <div class="meter">
@@ -455,7 +455,7 @@
           </div>
           <div class="statusbar">
             <div class="seg">
-              <span><b>● DARKROOM</b> · v2.4</span>
+              <span><b>● DARKROOM</b> · v2.0</span>
               <span>当前胶卷 <b id="sb-frames">0</b> 张</span>
               <span>点击照片选中 · 上传后可编辑元数据</span>
             </div>
@@ -480,11 +480,17 @@
 
         <div class="insp-title" id="insp-title">（未选中）</div>
         <div class="insp-sub" id="insp-sub"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin:8px 0;font-family:var(--mono);font-size:10px;color:var(--cream-fade)">
+          <span id="metadata-status" role="status"></span>
+          <button class="btn" id="read-exif" style="padding:4px 8px;font-size:10px">读取 EXIF</button>
+        </div>
 
         <div class="exif">
           <div class="row"><div class="k">相机</div><div class="v" id="exif-camera">—</div></div>
           <div class="row"><div class="k">镜头</div><div class="v" id="exif-lens">—</div></div>
           <div class="row"><div class="k">焦距</div><div class="v" id="exif-focal">—</div></div>
+          <div class="row"><div class="k">35mm 等效</div><div class="v" id="exif-focal35">—</div></div>
+          <div class="row"><div class="k">拍摄时间</div><div class="v" id="exif-taken-at">—</div></div>
           <div class="row"><div class="k">光圈</div><div class="v amber" id="exif-aperture">—</div></div>
           <div class="row"><div class="k">快门</div><div class="v amber" id="exif-shutter">—</div></div>
           <div class="row"><div class="k">ISO</div><div class="v amber" id="exif-iso">—</div></div>
@@ -526,10 +532,15 @@
               </div>
               <label><span class="k">拍摄模式</span>
                 <select id="m-mode">
+                  <option value="">未知 / 未记录</option>
                   <option value="A">A · 光圈优先</option>
                   <option value="S">S · 快门优先</option>
                   <option value="M">M · 手动</option>
                   <option value="P">P · 程序</option>
+                  <option value="DEPTH">景深优先</option>
+                  <option value="ACTION">动作优先</option>
+                  <option value="PORTRAIT">人像模式</option>
+                  <option value="LANDSCAPE">风景模式</option>
                 </select>
               </label>
               <label><span class="k">标签（逗号分隔）</span><input type="text" id="m-tags" placeholder="风景, 黄昏, 收藏"></label>
@@ -558,6 +569,8 @@
 
   <input type="file" id="file-input" accept="image/*" multiple style="position:fixed;opacity:0;pointer-events:none;top:0;left:0;width:1px;height:1px;overflow:hidden">
 
+<script src="vendor/exifr/dist/full.umd.js"></script>
+<script src="photo-metadata.js"></script>
 <script>
   // ===== HELPERS =====
   function escapeHtml(s){
@@ -576,6 +589,34 @@
   ];
   let nextId=7;
   let selectedIdx=-1;
+  let storageReady=false;
+  let savedSnapshot=null;
+  let importing=false;
+  const metadataAttempted=new Set();
+  const metadataPending=new Set();
+
+  function snapshot(){return {version:1,rolls,nextId,selectedIdx};}
+  function persist(message){
+    if(!storageReady){showToast('相册存储不可用，修改未保存');return false;}
+    try {
+      const saved=window.albumStorage.save(snapshot());
+      saved.rolls.forEach((r,i)=>r.shots.forEach((s,j)=>{
+        rolls[i].shots[j].src=s.src;
+        rolls[i].shots[j].photoFile=s.photoFile;
+      }));
+      savedSnapshot=JSON.stringify(saved);
+      if(message) showToast(message);
+      return true;
+    } catch(error) {
+      if(savedSnapshot){
+        const previous=JSON.parse(savedSnapshot);
+        rolls=previous.rolls;nextId=previous.nextId;selectedIdx=previous.selectedIdx;
+        renderAll();
+      }
+      alert('保存失败，本次修改未提交：'+error.message+'。请检查磁盘空间与目录权限后重试。');
+      return false;
+    }
+  }
 
   function activeRoll(){return rolls.find(r=>r.active);}
 
@@ -602,6 +643,7 @@
         rolls.forEach(x=>x.active=false);
         r.active=true;
         selectedIdx=-1;
+        persist();
         renderAll();
       });
       el.querySelector('.ren').addEventListener('click',e=>{
@@ -617,7 +659,7 @@
         if(wasActive&&rolls.length) rolls[0].active=true;
         selectedIdx=-1;
         renderAll();
-        showToast('✓ 已删除胶卷');
+        persist('✓ 已删除胶卷');
       });
       rollsEl.appendChild(el);
     });
@@ -638,6 +680,7 @@
       if(done) return;
       done=true;
       if(commit){const v=input.value.trim();if(v)r.name=v;}
+      if(commit) persist('✓ 胶卷已保存');
       renderRolls();
     };
     // Only handle Enter/Escape — do NOT stopPropagation on keydown
@@ -655,6 +698,7 @@
   document.getElementById('add-roll').addEventListener('click',()=>{
     const r={id:nextId++,name:`新胶卷 ${nextId-1}`,shots:[],active:false};
     rolls.push(r);
+    if(!persist()) return;
     renderRolls();
     const newEl=rollsEl.querySelector(`[data-id="${r.id}"]`);
     if(newEl) startRename(newEl,r);
@@ -735,7 +779,7 @@
           if(shot.aperture||shot.shutter){
             const meta=document.createElement('div');
             meta.className='meta';
-            meta.innerHTML=`<span>${shot.aperture||'—'}</span><span>${shot.shutter||'—'}</span>`;
+            meta.innerHTML=`<span>${escapeHtml(shot.aperture)||'—'}</span><span>${escapeHtml(shot.shutter)||'—'}</span>`;
             frame.appendChild(meta);
           }
 
@@ -748,6 +792,7 @@
 
           frame.addEventListener('click',()=>{
             selectedIdx=gi;
+            persist();
             renderFrames();
             updateInspector();
           });
@@ -765,7 +810,7 @@
             roll.shots.splice(gi,1);
             if(selectedIdx>=roll.shots.length) selectedIdx=roll.shots.length-1;
             renderAll();
-            showToast('✓ 已删除照片');
+            persist('✓ 已删除照片');
           });
           frame.addEventListener('mouseenter',()=>delBtn.style.display='');
           frame.addEventListener('mouseleave',()=>delBtn.style.display='none');
@@ -788,32 +833,49 @@
   }
 
   // ===== FILE UPLOAD =====
-  function handleFiles(files){
+  async function handleFiles(files){
+    if(!storageReady || importing) return;
     const roll=activeRoll();
     if(!roll) return;
     const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));
     if(!arr.length) return;
-    let loaded=0;
-    arr.forEach(file=>{
-      const reader=new FileReader();
-      reader.onload=e=>{
-        roll.shots.push({
+    importing=true;
+    showToast('正在导入照片，请稍候…');
+    try {
+      const shots=await Promise.all(arr.map(async file=>{
+        const metadata=await window.photoMetadata.readPhotoMetadata(file);
+        return new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onerror=()=>reject(new Error('无法读取 '+file.name));
+        reader.onabort=()=>reject(new Error('导入已取消'));
+        reader.onload=e=>resolve({
           src:e.target.result,
           title:file.name.replace(/\.[^.]+$/,''),
           location:'',camera:'',lens:'',focal:'',
-          aperture:'',shutter:'',iso:'',ev:'',wb:'',mode:'A',tags:'',
+          aperture:'',shutter:'',iso:'',ev:'',wb:'',mode:'',tags:'',
           rating:0,
+          ...metadata,
         });
-        loaded++;
-        if(loaded===arr.length){
-          selectedIdx=roll.shots.length-1;
-          renderAll();
-          showToast(`✓ 已上传 ${arr.length} 张照片`);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+        reader.readAsDataURL(file);
+        });
+      }));
+      if(!rolls.includes(roll)) throw new Error('目标胶卷已删除，请重新导入');
+      roll.shots.push(...shots);
+      selectedIdx=activeRoll()===roll?roll.shots.length-1:selectedIdx;
+      persist(`✓ 已保存 ${arr.length} 张照片`);
+      renderAll();
+    } catch(error){alert('照片导入失败：'+error.message);}
+    finally {importing=false;}
   }
+
+  window.addEventListener('beforeunload',e=>{
+    if(importing){e.preventDefault();e.returnValue='照片尚未导入完成';}
+  });
+  document.addEventListener('click',e=>{
+    if(importing && e.target.closest('a')){
+      e.preventDefault();showToast('请等待照片导入完成后再离开');
+    }
+  },true);
 
   document.getElementById('file-input').addEventListener('change',e=>{
     handleFiles(e.target.files);
@@ -846,18 +908,43 @@
     set('exif-camera',shot?.camera);
     set('exif-lens',shot?.lens);
     set('exif-focal',shot?.focal);
-    set('exif-aperture',shot?.aperture);
+    set('exif-focal35',shot?.focal35);
+    set('exif-taken-at',shot?.takenAt);
+    set('exif-aperture',shot?.aperture?(/^(f|ƒ)/i.test(shot.aperture)?shot.aperture:'ƒ/'+shot.aperture):'');
     set('exif-shutter',shot?.shutter);
     set('exif-iso',shot?.iso);
     set('exif-ev',shot?.ev);
     set('exif-wb',shot?.wb);
     set('exif-mode',shot?.mode);
+    const metadataStatus=document.getElementById('metadata-status');
+    metadataStatus.textContent=!shot?'选择照片后读取拍摄参数':metadataPending.has(shot.photoFile)?'正在读取 EXIF…':
+      ({read:'已读取 EXIF',none:'图片未记录可读拍摄参数',error:'EXIF 无法解析，可重试或手动编辑'})[shot.exifStatus]||'尚未读取 EXIF';
+    document.getElementById('read-exif').disabled=!shot?.photoFile||metadataPending.has(shot?.photoFile);
+    if(shot?.photoFile && !shot.exifVersion && !metadataAttempted.has(shot.photoFile)) loadShotMetadata(shot);
 
     // sync rating widget to current photo
     renderRating(shot?.rating??0);
     const rnLabel=document.getElementById('rating-roll-name');
     if(rnLabel) rnLabel.textContent=shot?shot.title||'（未命名）':'—';
   }
+
+  async function loadShotMetadata(shot){
+    if(!shot.photoFile || metadataPending.has(shot.photoFile)) return;
+    metadataAttempted.add(shot.photoFile);metadataPending.add(shot.photoFile);
+    document.getElementById('metadata-status').textContent='正在读取 EXIF…';
+    document.getElementById('read-exif').disabled=true;
+    try {
+      const metadata=await window.albumStorage.metadata(shot.photoFile);
+      if(!rolls.some(roll=>roll.shots.includes(shot))) return;
+      window.photoMetadata.applyPhotoMetadata(shot,metadata);
+      persist();
+    } catch(error){showToast('EXIF 读取未完成：'+error.message);}
+    finally {metadataPending.delete(shot.photoFile);updateInspector();}
+  }
+  document.getElementById('read-exif').addEventListener('click',()=>{
+    const shot=activeRoll()?.shots[selectedIdx];
+    if(shot) loadShotMetadata(shot);
+  });
 
   // ===== LIGHTBOX =====
   const lightbox=document.getElementById('lightbox');
@@ -892,7 +979,7 @@
     roll.shots.splice(selectedIdx,1);
     if(selectedIdx>=roll.shots.length) selectedIdx=roll.shots.length-1;
     renderAll();
-    showToast('✓ 已删除照片');
+    persist('✓ 已删除照片');
   });
 
   // ===== EDIT MODAL =====
@@ -914,7 +1001,7 @@
     document.getElementById('m-wb').value=shot.wb||'';
     document.getElementById('m-tags').value=shot.tags||'';
     const modeEl=document.getElementById('m-mode');
-    if(modeEl) modeEl.value=shot.mode||'A';
+    if(modeEl) modeEl.value=shot.mode||'';
     modal.hidden=false;
   });
 
@@ -922,6 +1009,11 @@
     const roll=activeRoll();
     const shot=(roll&&selectedIdx>=0)?roll.shots[selectedIdx]:null;
     if(shot){
+      const edited=new Set(shot.metadataEdited||[]);
+      for(const key of ['camera','lens','focal','aperture','shutter','iso','ev','wb','mode']){
+        if((shot[key]||'')!==document.getElementById('m-'+key).value.trim()) edited.add(key);
+      }
+      shot.metadataEdited=Array.from(edited);
       shot.title=document.getElementById('m-title').value.trim();
       shot.location=document.getElementById('m-location').value.trim();
       shot.camera=document.getElementById('m-camera').value.trim();
@@ -937,7 +1029,7 @@
       if(modeEl) shot.mode=modeEl.value;
       renderFrames();
       updateInspector();
-      showToast('✓ 元数据已保存');
+      persist('✓ 元数据已保存');
     }
     modal.hidden=true;
   });
@@ -1012,6 +1104,7 @@
     const v=parseFloat(hit.dataset.val);
     shot.rating=(shot.rating===v)?Math.max(0,v-0.5):v;
     renderRating(shot.rating);
+    persist('✓ 评分已保存');
   });
 
   renderRating(0);
@@ -1029,6 +1122,27 @@
 
   // ===== INIT =====
   function renderAll(){renderRolls();renderFrames();updateInspector();}
+  try {
+    if(!window.albumStorage) throw new Error('请通过 DARKROOM 桌面程序打开相册');
+    const result=window.albumStorage.load();
+    if(result.data){
+      rolls=result.data.rolls;nextId=result.data.nextId;
+      selectedIdx=Number.isInteger(result.data.selectedIdx)?result.data.selectedIdx:-1;
+      if(!rolls.some(r=>r.active)) rolls[0].active=true;
+    }
+    storageReady=true;
+    if(!persist()) throw new Error('无法初始化相册存档');
+    if(result.warning) alert(result.warning);
+  } catch(error) {
+    storageReady=false;
+    alert('无法读取相册：'+error.message+'。为保护已有内容，编辑已停用。');
+    document.querySelector('.app')?.setAttribute('inert','');
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('a')){e.preventDefault();e.stopImmediatePropagation();}
+    },true);
+    document.addEventListener('change',e=>{e.stopImmediatePropagation();},true);
+    document.addEventListener('drop',e=>{e.preventDefault();e.stopImmediatePropagation();},true);
+  }
   renderAll();
 </script>
 </body>
